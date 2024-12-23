@@ -4,7 +4,11 @@ const User = require('../models/UserModel');
 
 const loginUser = async (req, res) => {
   try {
-    console.log('Login attempt:', { email: req.body.email });
+    console.log('Login attempt details:', {
+      email: req.body.email,
+      passwordProvided: !!req.body.password
+    });
+
     const { email, password } = req.body;
 
     // Validate input
@@ -18,7 +22,11 @@ const loginUser = async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email });
-    console.log('User found:', user ? 'Yes' : 'No');
+    console.log('User search result:', {
+      found: !!user,
+      email: user?.email,
+      role: user?.role
+    });
     
     if (!user) {
       return res.status(401).json({
@@ -29,7 +37,10 @@ const loginUser = async (req, res) => {
 
     // Check password using the model's method
     const isPasswordValid = await user.comparePassword(password);
-    console.log('Password valid:', isPasswordValid ? 'Yes' : 'No');
+    console.log('Password validation:', {
+      isValid: isPasswordValid,
+      providedPassword: password
+    });
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -39,15 +50,20 @@ const loginUser = async (req, res) => {
     }
 
     // Create and sign JWT token
+    const tokenPayload = {
+      userId: user._id,
+      email: user.email,
+      role: user.role
+    };
+    console.log('Creating token with payload:', tokenPayload);
+    
     const token = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-        role: user.role
-      },
+      tokenPayload,
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    console.log('Token created successfully');
 
     // Send response
     res.status(200).json({

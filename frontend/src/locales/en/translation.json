@@ -1,0 +1,46 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "trainingClasses": "Training Classes",
+    "competitions": "Competitions",
+    "horses": "Horses",
+    "trainers": "Trainers",
+    "trainees": "Trainees",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "loading": "Loading..."
+  },
+  "dashboard": {
+    "upcomingClasses": "Upcoming Classes",
+    "activeCompetitions": "Active Competitions",
+    "recentActivities": "Recent Activities",
+    "welcomeMessage": "Welcome to Equestrian Hub"
+  },
+  "trainingClass": {
+    "name": "Class Name",
+    "description": "Description",
+    "type": "Type",
+    "level": "Level",
+    "trainer": "Trainer",
+    "schedule": "Schedule",
+    "price": "Price",
+    "location": "Location",
+    "enrolledTrainees": "Enrolled Trainees",
+    "maxParticipants": "Maximum Participants",
+    "status": "Status"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidCredentials": "Invalid email or password",
+    "somethingWentWrong": "Something went wrong"
+  }
+}
