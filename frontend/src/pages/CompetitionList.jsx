@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ import { format } from 'date-fns';
 import { getCompetitions, createCompetition, updateCompetition, deleteCompetition } from '../services/api';
 
 const CompetitionList = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [formData, setFormData] = useState({
@@ -50,7 +52,6 @@ const CompetitionList = () => {
     'competitions',
     async () => {
       const response = await getCompetitions();
-      console.log('Competition response:', response);
       if (response?.data?.success) {
         return response.data.competitions || [];
       }
@@ -140,7 +141,7 @@ const CompetitionList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this competition?')) {
+    if (window.confirm(t('competition.confirmDelete'))) {
       try {
         deleteMutation.mutate(id);
       } catch (error) {
@@ -152,7 +153,7 @@ const CompetitionList = () => {
   if (isLoading) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography>Loading competitions...</Typography>
+        <Typography>{t('common.loading')}</Typography>
       </Box>
     );
   }
@@ -160,7 +161,7 @@ const CompetitionList = () => {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">Error loading competitions. Please try again later.</Alert>
+        <Alert severity="error">{t('errors.somethingWentWrong')}</Alert>
       </Box>
     );
   }
@@ -168,14 +169,14 @@ const CompetitionList = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Competition Management</Typography>
+        <Typography variant="h4">{t('common.competitions')}</Typography>
         <Button
           variant="contained"
           color="primary"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add New Competition
+          {t('competition.addCompetition')}
         </Button>
       </Box>
 
@@ -198,29 +199,14 @@ const CompetitionList = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <TrophyIcon sx={{ mr: 1 }} />
                   <Typography color="textSecondary">
-                    {competition.type} - {competition.level}
+                    {t(`competition.types.${competition.type}`)} - {t(`competition.levels.${competition.level}`)}
                   </Typography>
                 </Box>
-                <Typography color="textSecondary" sx={{ mt: 1 }}>
-                  Entry Fee: ${competition.entryFee}
-                </Typography>
-                <Typography color="textSecondary">
-                  Max Participants: {competition.maxParticipants}
-                </Typography>
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleOpen(competition)}
-                    sx={{ mr: 1 }}
-                  >
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <IconButton onClick={() => handleOpen(competition)} color="primary">
                     <EditIcon />
                   </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(competition._id)}
-                  >
+                  <IconButton onClick={() => handleDelete(competition._id)} color="error">
                     <DeleteIcon />
                   </IconButton>
                 </Box>
@@ -230,100 +216,106 @@ const CompetitionList = () => {
         ))}
       </Grid>
 
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {selectedCompetition ? 'Edit Competition' : 'Add New Competition'}
+          {selectedCompetition ? t('competition.editCompetition') : t('competition.addCompetition')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
-              fullWidth
-              label="Name"
+              margin="dense"
               name="name"
+              label={t('competition.competitionName')}
+              fullWidth
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              margin="normal"
               required
             />
             <TextField
-              fullWidth
-              label="Date"
+              margin="dense"
               name="date"
+              label={t('competition.competitionDate')}
               type="date"
+              fullWidth
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              margin="normal"
               required
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              fullWidth
-              label="Location"
+              margin="dense"
               name="location"
+              label={t('competition.competitionLocation')}
+              fullWidth
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              margin="normal"
               required
             />
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel>Type</InputLabel>
+            <FormControl fullWidth margin="dense">
+              <InputLabel>{t('competition.competitionType')}</InputLabel>
               <Select
+                name="type"
                 value={formData.type}
-                label="Type"
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                required
               >
-                <MenuItem value="dressage">Dressage</MenuItem>
-                <MenuItem value="jumping">Jumping</MenuItem>
-                <MenuItem value="eventing">Eventing</MenuItem>
+                {Object.keys(t('competition.types', { returnObjects: true })).map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {t(`competition.types.${type}`)}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel>Level</InputLabel>
+            <FormControl fullWidth margin="dense">
+              <InputLabel>{t('competition.competitionLevel')}</InputLabel>
               <Select
+                name="level"
                 value={formData.level}
-                label="Level"
                 onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                required
               >
-                <MenuItem value="beginner">Beginner</MenuItem>
-                <MenuItem value="intermediate">Intermediate</MenuItem>
-                <MenuItem value="advanced">Advanced</MenuItem>
+                {Object.keys(t('competition.levels', { returnObjects: true })).map((level) => (
+                  <MenuItem key={level} value={level}>
+                    {t(`competition.levels.${level}`)}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <TextField
-              fullWidth
-              label="Max Participants"
+              margin="dense"
               name="maxParticipants"
+              label={t('competition.maxParticipants')}
               type="number"
+              fullWidth
               value={formData.maxParticipants}
               onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
-              margin="normal"
               required
             />
             <TextField
-              fullWidth
-              label="Entry Fee"
+              margin="dense"
               name="entryFee"
+              label={t('competition.entryFee')}
               type="number"
+              fullWidth
               value={formData.entryFee}
               onChange={(e) => setFormData({ ...formData, entryFee: e.target.value })}
-              margin="normal"
               required
             />
             <TextField
-              fullWidth
-              label="Description"
+              margin="dense"
               name="description"
+              label={t('competition.description')}
               multiline
               rows={4}
+              fullWidth
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              margin="normal"
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
-              {selectedCompetition ? 'Update' : 'Add'}
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained">
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>

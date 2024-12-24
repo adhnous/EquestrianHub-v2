@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -28,6 +29,7 @@ import { getTrainers, createTrainer, updateTrainer, deleteTrainer } from '../ser
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Trainers = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [formData, setFormData] = useState({
@@ -48,7 +50,6 @@ const Trainers = () => {
     error: queryError
   } = useQuery('trainers', async () => {
     const response = await getTrainers();
-    console.log('Trainers API Response:', response);
     return response.data;
   });
 
@@ -99,7 +100,7 @@ const Trainers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this trainer?')) {
+    if (window.confirm(t('trainer.confirmDelete'))) {
       try {
         await deleteTrainer(id);
         queryClient.invalidateQueries('trainers');
@@ -117,25 +118,24 @@ const Trainers = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">
-          {queryError.response?.data?.message || 'Error loading trainers'}
+          {t('trainer.error.failedToLoad')}
         </Alert>
       </Box>
     );
   }
 
-  // Ensure we have an array of trainers
   const trainers = data?.trainers || [];
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Trainers</Typography>
+        <Typography variant="h4">{t('trainer.title')}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add Trainer
+          {t('trainer.addTrainer')}
         </Button>
       </Box>
 
@@ -143,25 +143,35 @@ const Trainers = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Specialization</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>{t('common.name')}</TableCell>
+              <TableCell>{t('common.email')}</TableCell>
+              <TableCell>{t('trainer.phone')}</TableCell>
+              <TableCell>{t('trainer.specialization')}</TableCell>
+              <TableCell>{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {trainers?.map((trainer) => (
+            {trainers.map((trainer) => (
               <TableRow key={trainer._id}>
-                <TableCell>{`${trainer.firstName} ${trainer.lastName}`}</TableCell>
+                <TableCell>
+                  {`${trainer.firstName} ${trainer.lastName}`}
+                </TableCell>
                 <TableCell>{trainer.email}</TableCell>
                 <TableCell>{trainer.phone}</TableCell>
                 <TableCell>{trainer.specialization}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpen(trainer)} color="primary">
+                  <IconButton
+                    onClick={() => handleOpen(trainer)}
+                    color="primary"
+                    size="small"
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(trainer._id)} color="error">
+                  <IconButton
+                    onClick={() => handleDelete(trainer._id)}
+                    color="error"
+                    size="small"
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -171,73 +181,70 @@ const Trainers = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Dialog open={open} onClose={handleClose}>
         <DialogTitle>
-          {selectedTrainer ? 'Edit Trainer' : 'Add New Trainer'}
+          {selectedTrainer ? t('trainer.editTrainer') : t('trainer.addTrainer')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
+              fullWidth
               margin="dense"
               name="firstName"
-              label="First Name"
-              fullWidth
+              label={t('trainer.firstName')}
               value={formData.firstName}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="lastName"
-              label="Last Name"
-              fullWidth
+              label={t('trainer.lastName')}
               value={formData.lastName}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="email"
-              label="Email"
+              label={t('common.email')}
               type="email"
-              fullWidth
               value={formData.email}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="phone"
-              label="Phone"
-              fullWidth
+              label={t('trainer.phone')}
               value={formData.phone}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="specialization"
-              label="Specialization"
-              fullWidth
+              label={t('trainer.specialization')}
               value={formData.specialization}
               onChange={handleChange}
-              required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="certifications"
-              label="Certifications"
-              fullWidth
-              multiline
-              rows={2}
+              label={t('trainer.certifications')}
               value={formData.certifications}
               onChange={handleChange}
             />
             <TextField
+              fullWidth
               margin="dense"
               name="bio"
-              label="Biography"
-              fullWidth
+              label={t('trainer.bio')}
               multiline
               rows={4}
               value={formData.bio}
@@ -245,9 +252,9 @@ const Trainers = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained">
-              {selectedTrainer ? 'Update' : 'Create'}
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>

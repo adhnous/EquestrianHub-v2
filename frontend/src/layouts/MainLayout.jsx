@@ -177,9 +177,30 @@ const MainLayout = () => {
         <List>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
-              <ListItemButton onClick={() => navigate(item.path)}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+              <ListItemButton 
+                onClick={() => navigate(item.path)}
+                sx={{ 
+                  minHeight: 48,
+                  justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{ 
+                    opacity: open ? 1 : 0,
+                    display: open ? 'block' : 'none' 
+                  }} 
+                />
               </ListItemButton>
             </ListItem>
           ))}

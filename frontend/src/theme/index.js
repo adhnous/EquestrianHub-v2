@@ -1,6 +1,18 @@
 import { createTheme } from '@mui/material/styles';
+import createCache from '@emotion/cache';
+import rtlPlugin from 'stylis-plugin-rtl';
+import { prefixer } from 'stylis';
 
-const theme = createTheme({
+// Create rtl cache
+export function createRtlCache() {
+  return createCache({
+    key: 'muirtl',
+    stylisPlugins: [prefixer, rtlPlugin],
+  });
+}
+
+// Base theme configuration
+const baseTheme = {
   palette: {
     primary: {
       main: '#2E7D32', // Forest green
@@ -53,6 +65,34 @@ const theme = createTheme({
     },
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          scrollbarColor: "#6b6b6b #2b2b2b",
+          "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
+            backgroundColor: "#2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
+            borderRadius: 8,
+            backgroundColor: "#6b6b6b",
+            minHeight: 24,
+            border: "3px solid #2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-corner, & *::-webkit-scrollbar-corner": {
+            backgroundColor: "#2b2b2b",
+          },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -85,6 +125,21 @@ const theme = createTheme({
       },
     },
   },
-});
+};
+
+// Default LTR theme
+const theme = createTheme(baseTheme);
+
+// Create RTL theme
+export function createRtlTheme() {
+  return createTheme({
+    ...baseTheme,
+    direction: 'rtl',
+    typography: {
+      ...baseTheme.typography,
+      fontFamily: '"Roboto", "Helvetica", "Arial", "Noto Sans Arabic", sans-serif',
+    },
+  });
+}
 
 export default theme;

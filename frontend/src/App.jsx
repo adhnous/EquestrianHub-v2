@@ -11,10 +11,10 @@ import './i18n';
 // Lazy load components
 const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const TraineeList = React.lazy(() => import('./pages/TraineeList'));
-const TrainerList = React.lazy(() => import('./pages/TrainerList'));
-const CompetitionList = React.lazy(() => import('./pages/CompetitionList'));
-const TrainingClassList = React.lazy(() => import('./pages/TrainingClassList'));
+const Trainees = React.lazy(() => import('./pages/Trainees'));
+const Trainers = React.lazy(() => import('./pages/Trainers'));
+const Competitions = React.lazy(() => import('./pages/Competitions'));
+const TrainingClasses = React.lazy(() => import('./pages/TrainingClasses'));
 const HorseManagement = React.lazy(() => import('./pages/HorseManagement'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const MainLayout = React.lazy(() => import('./layouts/MainLayout'));
@@ -41,8 +41,15 @@ function App() {
     // Update theme direction based on language
     const isRtl = i18n.language === 'ar';
     document.dir = isRtl ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
     setCurrentTheme(isRtl ? createRtlTheme() : theme);
   }, [i18n.language]);
+
+  // Initialize language
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') || 'ar';
+    i18n.changeLanguage(savedLanguage);
+  }, [i18n]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -56,10 +63,10 @@ function App() {
                 <Route path="/" element={<MainLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="trainees" element={<TraineeList />} />
-                  <Route path="trainers" element={<TrainerList />} />
-                  <Route path="competitions" element={<CompetitionList />} />
-                  <Route path="training-classes" element={<TrainingClassList />} />
+                  <Route path="trainees" element={<Trainees />} />
+                  <Route path="trainers" element={<Trainers />} />
+                  <Route path="competitions" element={<Competitions />} />
+                  <Route path="training-classes" element={<TrainingClasses />} />
                   <Route path="horses" element={<HorseManagement />} />
                   <Route path="profile" element={<Profile />} />
                 </Route>

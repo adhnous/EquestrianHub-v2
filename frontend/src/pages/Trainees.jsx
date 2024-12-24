@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
   Button,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Chip,
   IconButton,
   Dialog,
   DialogTitle,
@@ -19,6 +19,8 @@ import {
   TextField,
   Alert,
   MenuItem,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -31,6 +33,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
 
 const Trainees = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
@@ -45,31 +48,16 @@ const Trainees = () => {
     experienceLevel: 'beginner',
   });
 
-  const {
-    data,
-    isLoading,
-    error: queryError
-  } = useQuery('trainees', async () => {
-    try {
-      console.log('Fetching trainees...');
+  const { data, isLoading, error: queryError } = useQuery(
+    'trainees',
+    async () => {
       const response = await getTrainees();
-      console.log('Trainees API Response:', response);
-      
-      if (!response.data) {
-        throw new Error('No data received from server');
-      }
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch trainees');
-      }
-
-      console.log('Trainees data:', response.data.trainees);
-      return response.data.trainees || [];
-    } catch (error) {
-      console.error('Error fetching trainees:', error);
-      throw error;
+      return response.data;
+    },
+    {
+      staleTime: 5000,
     }
-  });
+  );
 
   const createMutation = useMutation(createTrainee, {
     onSuccess: () => {
@@ -77,7 +65,7 @@ const Trainees = () => {
       handleClose();
     },
     onError: (error) => {
-      setError(error.response?.data?.message || 'Error creating trainee');
+      setError(error.response?.data?.message || t('trainee.error.failedToSave'));
     },
   });
 
@@ -89,7 +77,7 @@ const Trainees = () => {
         handleClose();
       },
       onError: (error) => {
-        setError(error.response?.data?.message || 'Error updating trainee');
+        setError(error.response?.data?.message || t('trainee.error.failedToUpdate'));
       },
     }
   );
@@ -99,15 +87,22 @@ const Trainees = () => {
       queryClient.invalidateQueries('trainees');
     },
     onError: (error) => {
-      setError(error.response?.data?.message || 'Error deleting trainee');
+      setError(error.response?.data?.message || t('trainee.error.failedToDelete'));
     },
   });
 
   const handleOpen = (trainee = null) => {
-    setError(null);
     if (trainee) {
       setSelectedTrainee(trainee);
-      setFormData(trainee);
+      setFormData({
+        name: trainee.name,
+        email: trainee.email,
+        phone: trainee.phone,
+        dateOfBirth: trainee.dateOfBirth?.split('T')[0] || '',
+        emergencyContact: trainee.emergencyContact,
+        emergencyPhone: trainee.emergencyPhone,
+        experienceLevel: trainee.experienceLevel,
+      });
     } else {
       setSelectedTrainee(null);
       setFormData({
@@ -129,71 +124,39 @@ const Trainees = () => {
     setError(null);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    try {
-      const traineeData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        experienceLevel: formData.experienceLevel,
-        emergencyContact: {
-          name: formData.emergencyContact,
-          phone: formData.emergencyPhone,
-          relationship: 'Emergency Contact'
-        }
-      };
-
-      if (selectedTrainee) {
-        await updateMutation.mutateAsync({
-          id: selectedTrainee._id,
-          data: traineeData
-        });
-      } else {
-        await createMutation.mutateAsync(traineeData);
-      }
-
-      handleClose();
-    } catch (err) {
-      console.error('Error saving trainee:', err);
-      setError(err.response?.data?.message || 'Error saving trainee');
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (selectedTrainee) {
+      updateMutation.mutate({
+        id: selectedTrainee._id,
+        data: formData,
+      });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this trainee?')) {
-      try {
-        await deleteMutation.mutateAsync(id);
-      } catch (err) {
-        console.error('Error deleting trainee:', err);
-      }
+  const handleDelete = (id) => {
+    if (window.confirm(t('trainee.confirmDelete'))) {
+      deleteMutation.mutate(id);
     }
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (queryError) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          {queryError.response?.data?.message || 'Error loading trainees'}
-        </Alert>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
       </Box>
     );
   }
 
-  // Ensure we have an array of trainees
   const trainees = data?.trainees || [];
 
   return (
@@ -205,74 +168,90 @@ const Trainees = () => {
       )}
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Trainees</Typography>
+        <Typography variant="h4">{t('trainee.title')}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add Trainee
+          {t('trainee.addTrainee')}
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Level</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {trainees.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  No trainees found
-                </TableCell>
-              </TableRow>
-            ) : (
-              trainees.map((trainee) => (
-                <TableRow key={trainee._id}>
-                  <TableCell>{trainee.name}</TableCell>
-                  <TableCell>{trainee.email}</TableCell>
-                  <TableCell>{trainee.phone}</TableCell>
-                  <TableCell>{trainee.experienceLevel}</TableCell>
-                  <TableCell>
-                    <IconButton 
-                      onClick={() => handleOpen(trainee)} 
+      <Grid container spacing={3}>
+        {trainees.length === 0 ? (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="h6">
+                {t('trainee.noTraineesFound')}
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          trainees.map((trainee) => (
+            <Grid item xs={12} sm={6} md={4} key={trainee._id}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    {trainee.name}
+                  </Typography>
+                  <Typography color="text.secondary" gutterBottom>
+                    {trainee.email}
+                  </Typography>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>{t('common.phone')}:</strong> {trainee.phone}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>{t('common.level')}:</strong> {t(`trainee.levels.${trainee.experienceLevel}`)}
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Chip 
+                        label={trainee.active ? t('trainee.status.active') : t('trainee.status.inactive')}
+                        color={trainee.active ? "success" : "default"}
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </CardContent>
+                <CardActions>
+                  <Tooltip title={t('common.edit')}>
+                    <IconButton
+                      onClick={() => handleOpen(trainee)}
                       color="primary"
                       size="small"
+                      aria-label={t('common.edit')}
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      onClick={() => handleDelete(trainee._id)} 
+                  </Tooltip>
+                  <Tooltip title={t('common.delete')}>
+                    <IconButton
+                      onClick={() => handleDelete(trainee._id)}
                       color="error"
                       size="small"
+                      aria-label={t('common.delete')}
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </Tooltip>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))
+        )}
+      </Grid>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>
-            {selectedTrainee ? 'Edit Trainee' : 'Add New Trainee'}
+            {selectedTrainee ? t('trainee.editTrainee') : t('trainee.addTrainee')}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'grid', gap: 2, pt: 2 }}>
               <TextField
                 name="name"
-                label="Name"
+                label={t('common.name')}
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -280,7 +259,7 @@ const Trainees = () => {
               />
               <TextField
                 name="email"
-                label="Email"
+                label={t('common.email')}
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -289,7 +268,7 @@ const Trainees = () => {
               />
               <TextField
                 name="phone"
-                label="Phone"
+                label={t('common.phone')}
                 value={formData.phone}
                 onChange={handleChange}
                 required
@@ -297,7 +276,7 @@ const Trainees = () => {
               />
               <TextField
                 name="dateOfBirth"
-                label="Date of Birth"
+                label={t('trainee.dateOfBirth')}
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
@@ -307,7 +286,7 @@ const Trainees = () => {
               />
               <TextField
                 name="emergencyContact"
-                label="Emergency Contact Name"
+                label={t('trainee.emergencyContactName')}
                 value={formData.emergencyContact}
                 onChange={handleChange}
                 required
@@ -315,7 +294,7 @@ const Trainees = () => {
               />
               <TextField
                 name="emergencyPhone"
-                label="Emergency Contact Phone"
+                label={t('trainee.emergencyContactPhone')}
                 value={formData.emergencyPhone}
                 onChange={handleChange}
                 required
@@ -323,7 +302,7 @@ const Trainees = () => {
               />
               <TextField
                 name="experienceLevel"
-                label="Level"
+                label={t('common.level')}
                 select
                 value={formData.experienceLevel}
                 onChange={handleChange}
@@ -332,22 +311,23 @@ const Trainees = () => {
               >
                 {LEVELS.map((level) => (
                   <MenuItem key={level} value={level}>
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                    {t(`trainee.levels.${level}`)}
                   </MenuItem>
                 ))}
               </TextField>
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
             <Button
               type="submit"
               variant="contained"
+              color="primary"
               disabled={createMutation.isLoading || updateMutation.isLoading}
             >
               {createMutation.isLoading || updateMutation.isLoading
-                ? 'Saving...'
-                : 'Save'}
+                ? t('common.saving')
+                : t('common.save')}
             </Button>
           </DialogActions>
         </form>

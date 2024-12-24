@@ -1,44 +1,59 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
-  Typography,
   Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Typography,
   Chip,
   Alert,
+  CircularProgress
 } from '@mui/material';
 import {
+  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Add as AddIcon,
-  School as SchoolIcon,
   Person as PersonIcon,
+  School as SchoolIcon
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import {
   getTrainingClasses,
+  getTrainers,
   createTrainingClass,
   updateTrainingClass,
-  deleteTrainingClass,
-  getTrainers,
+  deleteTrainingClass
 } from '../services/api';
-import LoadingSpinner from '../components/LoadingSpinner';
 
-const TrainingClasses = () => {
+const LoadingSpinner = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+    <CircularProgress />
+  </Box>
+);
+
+const ErrorMessage = ({ error }) => (
+  <Box sx={{ p: 3 }}>
+    <Alert severity="error">
+      {error.response?.data?.message || 'Something went wrong'}
+    </Alert>
+  </Box>
+);
+
+function TrainingClasses() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [formData, setFormData] = useState({
@@ -47,49 +62,72 @@ const TrainingClasses = () => {
     trainer: '',
     type: 'group',
     level: 'beginner',
-    maxParticipants: 8,
-    price: 0,
-    startDate: format(new Date(), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd'),
+    maxParticipants: '',
+    price: '',
+    startDate: '',
+    endDate: '',
     schedule: {
       days: [],
-      startTime: '09:00',
-      endTime: '10:00',
-    },
+      startTime: '',
+      endTime: ''
+    }
   });
 
-  const {
-    data,
-    isLoading,
-    error: queryError,
-  } = useQuery('trainingClasses', async () => {
-    const response = await getTrainingClasses();
-    console.log('Training Classes API Response:', response);
-    return response.data;
-  });
-
-  const { data: trainersData, isLoading: trainersLoading } = useQuery(
+  const { 
+    data: trainersData, 
+    isLoading: trainersLoading,
+    error: trainersError 
+  } = useQuery(
     'trainers',
     async () => {
       const response = await getTrainers();
-      console.log('Trainers API Response:', response);
-      return response.data.data;
+      return response.data || [];
     }
   );
+
+  const { 
+    data: classesData, 
+    isLoading: classesLoading,
+    error: classesError,
+    refetch: refetchClasses 
+  } = useQuery(
+    'trainingClasses',
+    async () => {
+      const response = await getTrainingClasses();
+      return response.data || [];
+    }
+  );
+
+  // Ensure we always have arrays and handle the data structure from the API
+  const trainers = Array.isArray(trainersData) ? trainersData : [];
+  const classes = Array.isArray(classesData) ? classesData.map(classItem => ({
+    ...classItem,
+    price: typeof classItem.price === 'string' ? parseFloat(classItem.price) : classItem.price,
+    schedule: {
+      days: Array.isArray(classItem.schedule?.days) ? classItem.schedule.days : [],
+      startTime: classItem.schedule?.startTime || '',
+      endTime: classItem.schedule?.endTime || ''
+    }
+  })) : [];
 
   const handleOpen = (classData = null) => {
     if (classData) {
       setSelectedClass(classData);
       setFormData({
-        ...classData,
-        startDate: format(new Date(classData.startDate), 'yyyy-MM-dd'),
-        endDate: format(new Date(classData.endDate), 'yyyy-MM-dd'),
+        name: classData.name || '',
+        description: classData.description || '',
         trainer: classData.trainer?._id || '',
+        type: classData.type || 'group',
+        level: classData.level || 'beginner',
+        maxParticipants: classData.maxParticipants || '',
+        price: classData.price || '',
+        startDate: classData.startDate?.split('T')[0] || '',
+        endDate: classData.endDate?.split('T')[0] || '',
         schedule: {
-          ...classData.schedule,
-          startTime: classData.schedule.startTime || '09:00',
-          endTime: classData.schedule.endTime || '10:00',
-        },
+          days: classData.schedule?.days || [],
+          startTime: classData.schedule?.startTime || '',
+          endTime: classData.schedule?.endTime || ''
+        }
       });
     } else {
       setSelectedClass(null);
@@ -99,15 +137,15 @@ const TrainingClasses = () => {
         trainer: '',
         type: 'group',
         level: 'beginner',
-        maxParticipants: 8,
-        price: 0,
-        startDate: format(new Date(), 'yyyy-MM-dd'),
-        endDate: format(new Date(), 'yyyy-MM-dd'),
+        maxParticipants: '',
+        price: '',
+        startDate: '',
+        endDate: '',
         schedule: {
           days: [],
-          startTime: '09:00',
-          endTime: '10:00',
-        },
+          startTime: '',
+          endTime: ''
+        }
       });
     }
     setOpen(true);
@@ -122,33 +160,19 @@ const TrainingClasses = () => {
     const { name, value } = e.target;
     if (name.startsWith('schedule.')) {
       const scheduleField = name.split('.')[1];
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         schedule: {
-          ...formData.schedule,
-          [scheduleField]: value,
-        },
-      });
+          ...prev.schedule,
+          [scheduleField]: value
+        }
+      }));
     } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
-  };
-
-  const handleDayToggle = (day) => {
-    const days = formData.schedule.days.includes(day)
-      ? formData.schedule.days.filter((d) => d !== day)
-      : [...formData.schedule.days, day];
-
-    setFormData({
-      ...formData,
-      schedule: {
-        ...formData.schedule,
-        days,
-      },
-    });
   };
 
   const handleSubmit = async (e) => {
@@ -165,7 +189,7 @@ const TrainingClasses = () => {
       } else {
         await createTrainingClass(classData);
       }
-      // refetch();
+      await refetchClasses();
       handleClose();
     } catch (error) {
       console.error('Error saving training class:', error);
@@ -173,49 +197,37 @@ const TrainingClasses = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this training class?')) {
+    if (window.confirm(t('trainingClass.confirmDelete'))) {
       try {
         await deleteTrainingClass(id);
-        // refetch();
+        await refetchClasses();
       } catch (error) {
         console.error('Error deleting training class:', error);
       }
     }
   };
 
-  if (isLoading || trainersLoading) {
+  if (trainersLoading || classesLoading) {
     return <LoadingSpinner />;
   }
 
-  if (queryError) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          {queryError.response?.data?.message || 'Error loading training classes'}
-        </Alert>
-      </Box>
-    );
+  if (trainersError || classesError) {
+    return <ErrorMessage error={trainersError || classesError} />;
   }
-
-  // Ensure we have an array of classes
-  const classes = data?.classes || [];
-  const trainers = trainersData || [];
-
-  const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center' }}>
           <SchoolIcon sx={{ mr: 1, fontSize: 35 }} />
-          Training Classes
+          {t('trainingClass.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add Class
+          {t('trainingClass.addClass')}
         </Button>
       </Box>
 
@@ -223,222 +235,232 @@ const TrainingClasses = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Trainer</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Level</TableCell>
-              <TableCell>Schedule</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>{t('common.name')}</TableCell>
+              <TableCell>{t('trainingClass.trainer')}</TableCell>
+              <TableCell>{t('common.type')}</TableCell>
+              <TableCell>{t('common.level')}</TableCell>
+              <TableCell>{t('common.schedule')}</TableCell>
+              <TableCell>{t('common.price')}</TableCell>
+              <TableCell>{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {classes?.map((classItem) => (
-              <TableRow key={classItem._id}>
-                <TableCell>{classItem.name}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <PersonIcon sx={{ mr: 1 }} />
-                    {classItem.trainer?.firstName} {classItem.trainer?.lastName}
-                  </Box>
-                </TableCell>
-                <TableCell>{classItem.type}</TableCell>
-                <TableCell>{classItem.level}</TableCell>
-                <TableCell>
-                  <Box>
-                    {classItem.schedule.days.map((day) => (
-                      <Chip
-                        key={day}
-                        label={day}
-                        size="small"
-                        sx={{ mr: 0.5, mb: 0.5 }}
-                      />
-                    ))}
-                  </Box>
-                  <Typography variant="caption" display="block">
-                    {classItem.schedule.startTime} - {classItem.schedule.endTime}
+            {classes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  <Typography variant="body1">
+                    {t('trainingClass.noClassesFound')}
                   </Typography>
                 </TableCell>
-                <TableCell>${classItem.price}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpen(classItem)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(classItem._id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              classes.map((classItem) => (
+                <TableRow key={classItem._id}>
+                  <TableCell>{classItem.name}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <PersonIcon sx={{ mr: 1 }} />
+                      {classItem.trainer?.firstName} {classItem.trainer?.lastName}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{t(`trainingClass.type.${classItem.type}`)}</TableCell>
+                  <TableCell>{t(`trainingClass.level.${classItem.level}`)}</TableCell>
+                  <TableCell>
+                    <Box>
+                      {classItem.schedule?.days?.map(
+                        (day) => (
+                          <Chip
+                            key={day}
+                            label={t(`common.days.${day.toLowerCase()}`)}
+                            size="small"
+                            sx={{ mr: 0.5, mb: 0.5 }}
+                          />
+                        )
+                      ) || null}
+                    </Box>
+                    <Typography variant="caption" display="block">
+                      {classItem.schedule?.startTime || 'N/A'} - {classItem.schedule?.endTime || 'N/A'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {typeof classItem.price === 'number' ? 
+                      `$${classItem.price}` :
+                      typeof classItem.price === 'object' ? 
+                        `$${classItem.price.amount} ${classItem.price.currency}${classItem.price.interval ? `/${classItem.price.interval}` : ''}` :
+                        'N/A'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpen(classItem)}
+                      color="primary"
+                      title={t('common.edit')}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDelete(classItem._id)}
+                      color="error"
+                      title={t('common.delete')}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {selectedClass ? 'Edit Training Class' : 'Add New Training Class'}
+          {selectedClass ? t('trainingClass.editClass') : t('trainingClass.addClass')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
+              fullWidth
               margin="dense"
               name="name"
-              label="Class Name"
-              fullWidth
+              label={t('common.name')}
               value={formData.name}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="description"
-              label="Description"
+              label={t('common.description')}
               multiline
-              rows={3}
-              fullWidth
+              rows={4}
               value={formData.description}
               onChange={handleChange}
             />
             <TextField
+              fullWidth
               margin="dense"
               name="trainer"
-              label="Trainer"
+              label={t('trainingClass.trainer')}
               select
-              fullWidth
               value={formData.trainer}
               onChange={handleChange}
               required
             >
-              {trainers?.map((trainer) => (
+              {trainers.map((trainer) => (
                 <MenuItem key={trainer._id} value={trainer._id}>
-                  {trainer.firstName} {trainer.lastName}
+                  {`${trainer.firstName} ${trainer.lastName}`}
                 </MenuItem>
               ))}
             </TextField>
             <TextField
+              fullWidth
               margin="dense"
               name="type"
-              label="Class Type"
+              label={t('common.type')}
               select
-              fullWidth
               value={formData.type}
               onChange={handleChange}
               required
             >
-              <MenuItem value="group">Group</MenuItem>
-              <MenuItem value="private">Private</MenuItem>
-              <MenuItem value="semi-private">Semi-Private</MenuItem>
+              <MenuItem value="group">{t('trainingClass.type.group')}</MenuItem>
+              <MenuItem value="private">{t('trainingClass.type.private')}</MenuItem>
+              <MenuItem value="semi-private">{t('trainingClass.type.semiPrivate')}</MenuItem>
             </TextField>
             <TextField
+              fullWidth
               margin="dense"
               name="level"
-              label="Level"
+              label={t('common.level')}
               select
-              fullWidth
               value={formData.level}
               onChange={handleChange}
               required
             >
-              <MenuItem value="beginner">Beginner</MenuItem>
-              <MenuItem value="intermediate">Intermediate</MenuItem>
-              <MenuItem value="advanced">Advanced</MenuItem>
+              <MenuItem value="beginner">{t('trainingClass.level.beginner')}</MenuItem>
+              <MenuItem value="intermediate">{t('trainingClass.level.intermediate')}</MenuItem>
+              <MenuItem value="advanced">{t('trainingClass.level.advanced')}</MenuItem>
             </TextField>
             <TextField
+              fullWidth
               margin="dense"
               name="maxParticipants"
-              label="Maximum Participants"
+              label={t('trainingClass.maxParticipants')}
               type="number"
-              fullWidth
               value={formData.maxParticipants}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="price"
-              label="Price per Session ($)"
+              label={t('common.price')}
               type="number"
-              fullWidth
               value={formData.price}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="startDate"
-              label="Start Date"
+              label={t('trainingClass.startDate')}
               type="date"
-              fullWidth
               value={formData.startDate}
               onChange={handleChange}
-              InputLabelProps={{
-                shrink: true,
-              }}
               required
+              InputLabelProps={{ shrink: true }}
             />
             <TextField
+              fullWidth
               margin="dense"
               name="endDate"
-              label="End Date"
+              label={t('trainingClass.endDate')}
               type="date"
-              fullWidth
               value={formData.endDate}
               onChange={handleChange}
-              InputLabelProps={{
-                shrink: true,
-              }}
               required
+              InputLabelProps={{ shrink: true }}
             />
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1">Class Days</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 1 }}>
-                {weekDays.map((day) => (
-                  <Chip
-                    key={day}
-                    label={day}
-                    onClick={() => handleDayToggle(day)}
-                    color={formData.schedule.days.includes(day) ? 'primary' : 'default'}
-                  />
-                ))}
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                margin="dense"
-                name="schedule.startTime"
-                label="Start Time"
-                type="time"
-                value={formData.schedule.startTime}
-                onChange={handleChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                required
-              />
-              <TextField
-                margin="dense"
-                name="schedule.endTime"
-                label="End Time"
-                type="time"
-                value={formData.schedule.endTime}
-                onChange={handleChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                required
-              />
-            </Box>
+            <TextField
+              fullWidth
+              margin="dense"
+              name="schedule.startTime"
+              label={t('trainingClass.schedule.startTime')}
+              type="time"
+              value={formData.schedule.startTime}
+              onChange={handleChange}
+              required
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              margin="dense"
+              name="schedule.endTime"
+              label={t('trainingClass.schedule.endTime')}
+              type="time"
+              value={formData.schedule.endTime}
+              onChange={handleChange}
+              required
+              InputLabelProps={{ shrink: true }}
+            />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>
+              {t('common.cancel')}
+            </Button>
             <Button type="submit" variant="contained">
-              {selectedClass ? 'Update' : 'Create'}
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
     </Box>
   );
-};
+}
 
 export default TrainingClasses;

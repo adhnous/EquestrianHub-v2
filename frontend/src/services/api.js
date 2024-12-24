@@ -8,6 +8,8 @@ const api = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache'
   },
   withCredentials: true
 });
@@ -19,6 +21,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add timestamp to prevent caching
+    config.params = {
+      ...config.params,
+      _t: Date.now()
+    };
     console.log('Request config:', {
       url: config.url,
       method: config.method,
@@ -42,13 +49,8 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message
-    });
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
+      // Handle unauthorized error
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -57,11 +59,8 @@ api.interceptors.response.use(
 );
 
 // Auth endpoints
-const login = (credentials) => api.post('/login', credentials);
-const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-};
+const login = (credentials) => api.post('/auth/login', credentials);
+const logout = () => api.post('/auth/logout');
 
 // Training Class endpoints
 const getTrainingClasses = () => api.get('/training-classes');
@@ -72,7 +71,7 @@ const deleteTrainingClass = (id) => api.delete(`/training-classes/${id}`);
 const enrollInClass = (id, data) => api.post(`/training-classes/${id}/enroll`, data);
 const updateSessionAttendance = (classId, sessionId, data) => 
   api.put(`/training-classes/${classId}/sessions/${sessionId}/attendance`, data);
-const updateSession = (classId, sessionId, data) =>
+const updateSession = (classId, sessionId, data) => 
   api.put(`/training-classes/${classId}/sessions/${sessionId}`, data);
 
 // Competition endpoints
@@ -84,7 +83,7 @@ const deleteCompetition = (id) => api.delete(`/competitions/${id}`);
 const registerForCompetition = (id, data) => api.post(`/competitions/${id}/register`, data);
 const updateCompetitionResults = (id, data) => api.put(`/competitions/${id}/results`, data);
 
-// User endpoints
+// Trainee endpoints
 const getTrainees = () => api.get('/trainees');
 const getTrainee = (id) => api.get(`/trainees/${id}`);
 const createTrainee = (data) => api.post('/trainees', data);
@@ -99,34 +98,23 @@ const updateTrainer = (id, data) => api.put(`/trainers/${id}`, data);
 const deleteTrainer = (id) => api.delete(`/trainers/${id}`);
 
 // Horse endpoints
-const getHorses = () => {
-  return api.get('/horses');
-};
-
-const getHorse = (id) => {
-  return api.get(`/horses/${id}`);
-};
-
-const createHorse = (data) => {
-  return api.post('/horses', data);
-};
-
-const updateHorse = (id, data) => {
-  return api.put(`/horses/${id}`, data);
-};
-
-const deleteHorse = (id) => {
-  return api.delete(`/horses/${id}`);
-};
+const getHorses = () => api.get('/horses');
+const getHorse = (id) => api.get(`/horses/${id}`);
+const createHorse = (data) => api.post('/horses', data);
+const updateHorse = (id, data) => api.put(`/horses/${id}`, data);
+const deleteHorse = (id) => api.delete(`/horses/${id}`);
 
 // Profile endpoints
-const getProfile = () => api.get('/auth/profile');
-const updateProfile = (data) => api.put('/auth/profile', data);
-const changePassword = (data) => api.post('/auth/change-password', data);
+const getProfile = () => api.get('/profile');
+const updateProfile = (data) => api.put('/profile', data);
+const changePassword = (data) => api.put('/profile/password', data);
 
 export {
+  // Auth
   login,
   logout,
+  
+  // Training Classes
   getTrainingClasses,
   getTrainingClass,
   createTrainingClass,
@@ -135,6 +123,8 @@ export {
   enrollInClass,
   updateSessionAttendance,
   updateSession,
+  
+  // Competitions
   getCompetitions,
   getCompetition,
   createCompetition,
@@ -142,22 +132,30 @@ export {
   deleteCompetition,
   registerForCompetition,
   updateCompetitionResults,
+  
+  // Trainees
   getTrainees,
   getTrainee,
   createTrainee,
   updateTrainee,
   deleteTrainee,
+  
+  // Trainers
   getTrainers,
   getTrainer,
   createTrainer,
   updateTrainer,
   deleteTrainer,
+  
+  // Horses
   getHorses,
   getHorse,
   createHorse,
   updateHorse,
   deleteHorse,
+  
+  // Profile
   getProfile,
   updateProfile,
-  changePassword,
+  changePassword
 };

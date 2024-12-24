@@ -221,7 +221,7 @@ const TrainingClassList = () => {
   console.log('Classes Data:', classesData);
   console.log('Trainers Data:', trainersData);
 
-  const classes = Array.isArray(classesData) ? classesData : [];
+  const classes = classesData?.trainingClasses || [];
   const trainers = Array.isArray(trainersData) ? trainersData : [];
 
   return (
@@ -415,7 +415,7 @@ const TrainingClassList = () => {
                 >
                   {trainers.map((trainer) => (
                     <MenuItem key={trainer._id} value={trainer._id}>
-                      {trainer.name}
+                      {trainer.username || 'N/A'}
                     </MenuItem>
                   ))}
                 </Select>

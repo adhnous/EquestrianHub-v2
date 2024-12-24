@@ -1,82 +1,117 @@
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
   Button,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Chip,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  Alert,
   MenuItem,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { getCompetitions, createCompetition, updateCompetition, deleteCompetition } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+const LEVELS = ['beginner', 'intermediate', 'advanced'];
+const STATUSES = ['upcoming', 'ongoing', 'completed'];
+
 const Competitions = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    location: '',
-    type: 'dressage',
+    date: '',
     level: 'beginner',
-    maxParticipants: 20,
-    entryFee: 0,
+    maxParticipants: '',
     description: '',
-    registrationDeadline: format(new Date(), 'yyyy-MM-dd'),
+    status: 'upcoming',
   });
 
-  const {
-    data,
-    isLoading,
-    error: queryError
-  } = useQuery('competitions', async () => {
-    const response = await getCompetitions();
-    console.log('API Response:', response);
-    return response.data.data;
+  const { data, isLoading, error: queryError } = useQuery(
+    'competitions',
+    async () => {
+      const response = await getCompetitions();
+      return response.data;
+    },
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5000
+    }
+  );
+
+  const competitions = data?.competitions || [];
+
+  const createMutation = useMutation(createCompetition, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('competitions');
+      handleClose();
+    },
+    onError: (error) => {
+      setError(error.response?.data?.message || t('competition.error.failedToSave'));
+    },
   });
 
-  // Ensure we have an array of competitions
-  const competitions = data || [];
+  const updateMutation = useMutation(
+    ({ id, data }) => updateCompetition(id, data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('competitions');
+        handleClose();
+      },
+      onError: (error) => {
+        setError(error.response?.data?.message || t('competition.error.failedToSave'));
+      },
+    }
+  );
+
+  const deleteMutation = useMutation(deleteCompetition, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('competitions');
+    },
+    onError: (error) => {
+      setError(error.response?.data?.message || t('competition.error.failedToDelete'));
+    },
+  });
 
   const handleOpen = (competition = null) => {
     if (competition) {
       setSelectedCompetition(competition);
       setFormData({
-        ...competition,
-        date: format(new Date(competition.date), 'yyyy-MM-dd'),
-        registrationDeadline: format(new Date(competition.registrationDeadline), 'yyyy-MM-dd'),
+        name: competition.name || '',
+        date: competition.date?.split('T')[0] || '',
+        level: competition.level || 'beginner',
+        maxParticipants: competition.maxParticipants || '',
+        description: competition.description || '',
+        status: competition.status || 'upcoming',
       });
     } else {
       setSelectedCompetition(null);
       setFormData({
         name: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        location: '',
-        type: 'dressage',
+        date: '',
         level: 'beginner',
-        maxParticipants: 20,
-        entryFee: 0,
+        maxParticipants: '',
         description: '',
-        registrationDeadline: format(new Date(), 'yyyy-MM-dd'),
+        status: 'upcoming',
       });
     }
     setOpen(true);
@@ -85,6 +120,7 @@ const Competitions = () => {
   const handleClose = () => {
     setOpen(false);
     setSelectedCompetition(null);
+    setError(null);
   };
 
   const handleChange = (e) => {
@@ -97,31 +133,25 @@ const Competitions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const competitionData = {
-        ...formData,
-        entryFee: Number(formData.entryFee),
-        maxParticipants: Number(formData.maxParticipants),
-      };
-
       if (selectedCompetition) {
-        await updateCompetition(selectedCompetition._id, competitionData);
+        await updateMutation.mutateAsync({
+          id: selectedCompetition._id,
+          data: formData,
+        });
       } else {
-        await createCompetition(competitionData);
+        await createMutation.mutateAsync(formData);
       }
-      refetch();
-      handleClose();
-    } catch (error) {
-      console.error('Error saving competition:', error);
+    } catch (err) {
+      console.error('Error submitting form:', err);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this competition?')) {
+    if (window.confirm(t('competition.confirmDelete'))) {
       try {
-        await deleteCompetition(id);
-        refetch();
-      } catch (error) {
-        console.error('Error deleting competition:', error);
+        await deleteMutation.mutateAsync(id);
+      } catch (err) {
+        console.error('Error deleting competition:', err);
       }
     }
   };
@@ -130,173 +160,173 @@ const Competitions = () => {
     return <LoadingSpinner />;
   }
 
+  if (queryError) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          {t('competition.error.failedToLoad')}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center' }}>
-          <TrophyIcon sx={{ mr: 1, fontSize: 35 }} />
-          Competitions
-        </Typography>
+        <Typography variant="h4">{t('competition.title')}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add Competition
+          {t('competition.addCompetition')}
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Level</TableCell>
-              <TableCell>Entry Fee</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {competitions?.map((competition) => (
-              <TableRow key={competition._id}>
-                <TableCell>{competition.name}</TableCell>
-                <TableCell>{format(new Date(competition.date), 'MMM dd, yyyy')}</TableCell>
-                <TableCell>{competition.location}</TableCell>
-                <TableCell>{competition.type}</TableCell>
-                <TableCell>{competition.level}</TableCell>
-                <TableCell>${competition.entryFee}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpen(competition)} color="primary">
+      <Grid container spacing={3}>
+        {!competitions || competitions.length === 0 ? (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="h6">
+                {t('competition.noCompetitionsFound')}
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          competitions.map((competition) => (
+            <Grid item xs={12} sm={6} md={4} key={competition._id}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    {competition.name}
+                  </Typography>
+                  <Typography color="text.secondary" gutterBottom>
+                    {new Date(competition.date).toLocaleDateString()}
+                  </Typography>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      {t('competition.level')}: {t(`competition.levels.${competition.level}`)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      {t('competition.maxParticipants')}: {competition.maxParticipants}
+                    </Typography>
+                    <Typography variant="body2">
+                      {t('competition.status.label')}: {t(`competition.status.${competition.status}`)}
+                    </Typography>
+                  </Box>
+                </CardContent>
+                <CardActions>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleOpen(competition)}
+                    color="primary"
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(competition._id)} color="error">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDelete(competition._id)}
+                    color="error"
+                  >
                     <DeleteIcon />
                   </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))
+        )}
+      </Grid>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {selectedCompetition ? 'Edit Competition' : 'Add New Competition'}
+          {selectedCompetition ? t('competition.editCompetition') : t('competition.addCompetition')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
             <TextField
+              fullWidth
               margin="dense"
               name="name"
-              label="Competition Name"
-              fullWidth
+              label={t('competition.name')}
               value={formData.name}
               onChange={handleChange}
               required
             />
             <TextField
+              fullWidth
               margin="dense"
               name="date"
-              label="Competition Date"
+              label={t('competition.date')}
               type="date"
-              fullWidth
               value={formData.date}
               onChange={handleChange}
-              InputLabelProps={{
-                shrink: true,
-              }}
               required
+              InputLabelProps={{ shrink: true }}
             />
             <TextField
-              margin="dense"
-              name="location"
-              label="Location"
               fullWidth
-              value={formData.location}
-              onChange={handleChange}
-              required
-            />
-            <TextField
-              margin="dense"
-              name="type"
-              label="Competition Type"
-              select
-              fullWidth
-              value={formData.type}
-              onChange={handleChange}
-              required
-            >
-              <MenuItem value="dressage">Dressage</MenuItem>
-              <MenuItem value="jumping">Jumping</MenuItem>
-              <MenuItem value="eventing">Eventing</MenuItem>
-              <MenuItem value="western">Western</MenuItem>
-            </TextField>
-            <TextField
               margin="dense"
               name="level"
-              label="Level"
+              label={t('competition.level')}
               select
-              fullWidth
               value={formData.level}
               onChange={handleChange}
               required
             >
-              <MenuItem value="beginner">Beginner</MenuItem>
-              <MenuItem value="intermediate">Intermediate</MenuItem>
-              <MenuItem value="advanced">Advanced</MenuItem>
-              <MenuItem value="professional">Professional</MenuItem>
+              {LEVELS.map((level) => (
+                <MenuItem key={level} value={level}>
+                  {t(`competition.levels.${level}`)}
+                </MenuItem>
+              ))}
             </TextField>
             <TextField
+              fullWidth
               margin="dense"
               name="maxParticipants"
-              label="Maximum Participants"
+              label={t('competition.maxParticipants')}
               type="number"
-              fullWidth
               value={formData.maxParticipants}
               onChange={handleChange}
               required
             />
             <TextField
-              margin="dense"
-              name="entryFee"
-              label="Entry Fee ($)"
-              type="number"
               fullWidth
-              value={formData.entryFee}
+              margin="dense"
+              name="status"
+              label={t('competition.status.label')}
+              select
+              value={formData.status}
               onChange={handleChange}
               required
-            />
+            >
+              {STATUSES.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {t(`competition.status.${status}`)}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
-              margin="dense"
-              name="registrationDeadline"
-              label="Registration Deadline"
-              type="date"
               fullWidth
-              value={formData.registrationDeadline}
-              onChange={handleChange}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              required
-            />
-            <TextField
               margin="dense"
               name="description"
-              label="Description"
+              label={t('competition.description')}
               multiline
               rows={4}
-              fullWidth
               value={formData.description}
               onChange={handleChange}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>
+              {t('common.cancel')}
+            </Button>
             <Button type="submit" variant="contained">
-              {selectedCompetition ? 'Update' : 'Create'}
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>

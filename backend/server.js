@@ -99,7 +99,7 @@ app.use('/api/trainers', trainerRoutes);  // Using plural form consistently
 app.use('/api/horses', horseRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/competitions', competitionRoutes);  // Added competition routes
-app.use('/api/training-classes', trainingClassRoutes);  // Added this line
+app.use('/api/training-classes', trainingClassRoutes);  // Added training class routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

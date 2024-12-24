@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { getHorses, createHorse, updateHorse, deleteHorse } from '../services/api';
 
 const HorseManagement = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedHorse, setSelectedHorse] = useState(null);
   const [error, setError] = useState(null);
@@ -48,213 +50,150 @@ const HorseManagement = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: horses, isLoading } = useQuery(
-    'horses',
-    async () => {
-      const response = await getHorses();
-      console.log('Horses response:', response);
-      if (response?.data?.success) {
-        return response.data.horses || [];
-      }
-      throw new Error(response?.data?.message || 'Failed to fetch horses');
-    },
-    {
-      onError: (error) => {
-        console.error('Error fetching horses:', error);
-        setError(error.message || 'Failed to fetch horses');
-      }
-    }
-  );
+  const { data: horses, isLoading } = useQuery('horses', getHorses);
 
-  const createMutation = useMutation(
-    async (newHorse) => {
-      const response = await createHorse(newHorse);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create horse');
-      }
-      return response.data.horse;
+  const createMutation = useMutation(createHorse, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('horses');
+      handleClose();
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('horses');
-        handleClose();
-      }
-    }
-  );
-
-  const updateMutation = useMutation(
-    async ({ id, data }) => {
-      const response = await updateHorse(id, data);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to update horse');
-      }
-      return response.data.horse;
+    onError: (error) => {
+      setError(error.message);
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('horses');
-        handleClose();
-      }
-    }
-  );
+  });
 
-  const deleteMutation = useMutation(
-    async (id) => {
-      const response = await deleteHorse(id);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to delete horse');
-      }
-      return response.data;
+  const updateMutation = useMutation(updateHorse, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('horses');
+      handleClose();
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('horses');
-      }
-    }
-  );
+    onError: (error) => {
+      setError(error.message);
+    },
+  });
 
-  const handleOpen = (horse = null) => {
-    if (horse) {
-      setSelectedHorse(horse);
-      setFormData({
-        name: horse.name,
-        breed: horse.breed,
-        age: horse.age,
-        color: horse.color,
-        gender: horse.gender,
-        registrationNumber: horse.registrationNumber,
-        healthStatus: horse.healthStatus,
-        specialNeeds: horse.specialNeeds || '',
-        owner: horse.owner,
-      });
-    } else {
-      setSelectedHorse(null);
-      setFormData({
-        name: '',
-        breed: '',
-        age: '',
-        color: '',
-        gender: 'mare',
-        registrationNumber: '',
-        healthStatus: 'healthy',
-        specialNeeds: '',
-        owner: '',
-      });
-    }
+  const deleteMutation = useMutation(deleteHorse, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('horses');
+    },
+    onError: (error) => {
+      setError(error.message);
+    },
+  });
+
+  const handleClickOpen = () => {
+    setSelectedHorse(null);
+    setFormData({
+      name: '',
+      breed: '',
+      age: '',
+      color: '',
+      gender: 'mare',
+      registrationNumber: '',
+      healthStatus: 'healthy',
+      specialNeeds: '',
+      owner: '',
+    });
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedHorse(null);
     setError(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (selectedHorse) {
-        await updateMutation.mutate({ id: selectedHorse._id, data: formData });
-      } else {
-        await createMutation.mutate(formData);
-      }
-    } catch (error) {
-      console.error('Error saving horse:', error);
-      setError(error.message);
+  const handleEdit = (horse) => {
+    setSelectedHorse(horse);
+    setFormData(horse);
+    setOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm(t('common.confirmDelete'))) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this horse?')) {
-      try {
-        await deleteMutation.mutate(id);
-      } catch (error) {
-        console.error('Error deleting horse:', error);
-        setError(error.message);
-      }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedHorse) {
+      updateMutation.mutate({ id: selectedHorse._id, ...formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
       </Box>
     );
   }
 
-  if (error) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      </Box>
-    );
-  }
-
-  const horsesList = horses || [];
-
   return (
     <Box sx={{ p: 3 }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-      
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Horse Management</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          {t('horse.management')}
+        </Typography>
         <Button
           variant="contained"
           color="primary"
           startIcon={<AddIcon />}
-          onClick={() => handleOpen()}
+          onClick={handleClickOpen}
         >
-          Add New Horse
+          {t('horse.addHorse')}
         </Button>
       </Box>
 
       <Grid container spacing={3}>
-        {horsesList.map((horse) => (
+        {horses?.data?.horses?.map((horse) => (
           <Grid item xs={12} sm={6} md={4} key={horse._id}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">{horse.name}</Typography>
-                  <Box>
-                    <IconButton onClick={() => handleOpen(horse)} size="small">
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(horse._id)} size="small" color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
+                <Box display="flex" justifyContent="flex-end">
+                  <IconButton size="small" onClick={() => handleEdit(horse)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleDelete(horse._id)}>
+                    <DeleteIcon />
+                  </IconButton>
                 </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <HorseIcon sx={{ mr: 1 }} />
-                  <Typography>{horse.breed}</Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <AgeIcon sx={{ mr: 1 }} />
-                  <Typography>{horse.age} years old</Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <ColorIcon sx={{ mr: 1 }} />
-                  <Typography>{horse.color}</Typography>
-                </Box>
-
-                <Typography color="textSecondary" sx={{ mt: 1 }}>
-                  Health Status: {horse.healthStatus}
+                <Typography variant="h6" component="div" align="right">
+                  {horse.name}
                 </Typography>
+                <Box display="flex" flexDirection="column" alignItems="flex-end" mt={1}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      {horse.breed}
+                    </Typography>
+                    <HorseIcon sx={{ ml: 1 }} />
+                  </Box>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('horse.yearsOld', { count: horse.age })}
+                    </Typography>
+                    <AgeIcon sx={{ ml: 1 }} />
+                  </Box>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      {horse.color}
+                    </Typography>
+                    <ColorIcon sx={{ ml: 1 }} />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('horse.healthStatus')}: {t(`horse.status.${horse.healthStatus}`)}
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -262,128 +201,124 @@ const HorseManagement = () => {
       </Grid>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{selectedHorse ? 'Edit Horse' : 'Add New Horse'}</DialogTitle>
+        <DialogTitle>
+          {selectedHorse ? t('horse.editHorse') : t('horse.addHorse')}
+        </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
+                  required
                   fullWidth
-                  label="Name"
+                  label={t('common.name')}
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
+                  required
                   fullWidth
-                  label="Breed"
+                  label={t('horse.breed')}
                   name="breed"
                   value={formData.breed}
                   onChange={handleChange}
-                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
+                  required
                   fullWidth
-                  label="Age"
+                  label={t('horse.age')}
                   name="age"
                   type="number"
                   value={formData.age}
                   onChange={handleChange}
-                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
+                  required
                   fullWidth
-                  label="Color"
+                  label={t('horse.color')}
                   name="color"
                   value={formData.color}
                   onChange={handleChange}
-                  required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Gender</InputLabel>
+                  <InputLabel>{t('horse.gender')}</InputLabel>
                   <Select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    label="Gender"
-                    required
+                    label={t('horse.gender')}
                   >
-                    <MenuItem value="mare">Mare</MenuItem>
-                    <MenuItem value="stallion">Stallion</MenuItem>
-                    <MenuItem value="gelding">Gelding</MenuItem>
+                    <MenuItem value="mare">{t('horse.genders.mare')}</MenuItem>
+                    <MenuItem value="stallion">{t('horse.genders.stallion')}</MenuItem>
+                    <MenuItem value="gelding">{t('horse.genders.gelding')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Registration Number"
+                  label={t('horse.registrationNumber')}
                   name="registrationNumber"
                   value={formData.registrationNumber}
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Health Status</InputLabel>
+                  <InputLabel>{t('horse.healthStatus')}</InputLabel>
                   <Select
                     name="healthStatus"
                     value={formData.healthStatus}
                     onChange={handleChange}
-                    label="Health Status"
-                    required
+                    label={t('horse.healthStatus')}
                   >
-                    <MenuItem value="healthy">Healthy</MenuItem>
-                    <MenuItem value="injured">Injured</MenuItem>
-                    <MenuItem value="sick">Sick</MenuItem>
-                    <MenuItem value="recovery">Recovery</MenuItem>
+                    <MenuItem value="healthy">{t('horse.status.healthy')}</MenuItem>
+                    <MenuItem value="sick">{t('horse.status.sick')}</MenuItem>
+                    <MenuItem value="recovery">{t('horse.status.recovery')}</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Owner"
-                  name="owner"
-                  value={formData.owner}
-                  onChange={handleChange}
-                  required
-                />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Special Needs"
+                  multiline
+                  rows={3}
+                  label={t('horse.specialNeeds')}
                   name="specialNeeds"
                   value={formData.specialNeeds}
                   onChange={handleChange}
-                  multiline
-                  rows={3}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  label={t('horse.owner')}
+                  name="owner"
+                  value={formData.owner}
+                  onChange={handleChange}
                 />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              disabled={createMutation.isLoading || updateMutation.isLoading}
-            >
-              {createMutation.isLoading || updateMutation.isLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                selectedHorse ? 'Update' : 'Create'
-              )}
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained" color="primary">
+              {selectedHorse ? t('common.save') : t('common.add')}
             </Button>
           </DialogActions>
         </form>
