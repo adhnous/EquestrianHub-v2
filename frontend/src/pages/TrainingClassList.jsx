@@ -1,188 +1,105 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
   Card,
   CardContent,
-  Grid,
   Typography,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
-  TextField,
   DialogActions,
-  IconButton,
-  Chip,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  CardActions,
-  Collapse,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  CircularProgress,
-  Alert
+  Chip,
+  Stack,
 } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-  ExpandMore as ExpandMoreIcon,
-  School as SchoolIcon,
-  Schedule as ScheduleIcon,
-  Group as GroupIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PersonIcon from '@mui/icons-material/Person';
+import GroupIcon from '@mui/icons-material/Group';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { format } from 'date-fns';
-import { 
-  getTrainingClasses, 
-  createTrainingClass, 
-  updateTrainingClass, 
-  deleteTrainingClass 
-} from '../services/api';
+import { getTrainingClasses, createTrainingClass, updateTrainingClass, deleteTrainingClass } from '../services/api';
 import { getTrainers } from '../services/api';
 
 const TrainingClassList = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
-  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    instructor: '',
+    time: '',
+    maxParticipants: '',
     description: '',
-    type: 'dressage',
+    price: '',
     level: 'beginner',
-    trainer: '',
-    maxParticipants: 8,
-    price: {
-      amount: '',
-      currency: 'USD'
-    },
-    location: '',
-    schedule: {
-      time: '',
-      days: [],
-      startDate: '',
-      endDate: ''
-    }
+    discipline: 'western'
   });
 
   const queryClient = useQueryClient();
 
-  const { data: classes = [], isLoading: classesLoading } = useQuery(
-    'training-classes',
-    async () => {
-      const response = await getTrainingClasses();
-      console.log('Training classes response:', response);
-      return response.data.trainingClasses || [];
-    },
-    {
-      onError: (error) => {
-        console.error('Error fetching training classes:', error);
-        setError(error.response?.data?.message || 'Failed to fetch training classes');
-      }
-    }
-  );
+  const { data, isLoading, error } = useQuery('trainingClasses', getTrainingClasses, {
+    select: (response) => response?.data?.trainingClasses || []
+  });
 
-  const { data: trainers = [], isLoading: trainersLoading } = useQuery(
-    'trainers',
-    async () => {
-      const response = await getTrainers();
-      console.log('Trainers response:', response);
-      return response.data.trainers || [];
-    },
-    {
-      onError: (error) => {
-        console.error('Error fetching trainers:', error);
-        setError(error.response?.data?.message || 'Failed to fetch trainers');
-      }
-    }
-  );
+  const { data: trainersData, isLoading: trainersLoading } = useQuery('trainers', getTrainers, {
+    select: (response) => response?.data?.trainers || []
+  });
 
-  const createMutation = useMutation(
-    async (newClass) => {
-      const response = await createTrainingClass(newClass);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create training class');
-      }
-      return response.data.class;
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('training-classes');
-        handleClose();
-      }
-    }
-  );
+  const classes = data || [];
+  const trainers = trainersData || [];
 
-  const updateMutation = useMutation(
-    async ({ id, data }) => {
-      const response = await updateTrainingClass(id, data);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to update training class');
-      }
-      return response.data.class;
+  const createMutation = useMutation(createTrainingClass, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('trainingClasses');
+      handleClose();
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('training-classes');
-        handleClose();
-      }
-    }
-  );
+  });
 
-  const deleteMutation = useMutation(
-    async (id) => {
-      const response = await deleteTrainingClass(id);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to delete training class');
-      }
-      return response.data;
+  const updateMutation = useMutation(updateTrainingClass, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('trainingClasses');
+      handleClose();
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('training-classes');
-      }
-    }
-  );
+  });
 
-  const handleOpen = (classItem = null) => {
-    if (classItem) {
-      setSelectedClass(classItem);
+  const deleteMutation = useMutation(deleteTrainingClass, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('trainingClasses');
+    },
+  });
+
+  const handleOpen = (trainingClass = null) => {
+    setSelectedClass(trainingClass);
+    if (trainingClass) {
       setFormData({
-        name: classItem.name,
-        description: classItem.description,
-        type: classItem.type,
-        level: classItem.level,
-        trainer: classItem.trainer._id,
-        maxParticipants: classItem.maxParticipants,
-        price: classItem.price,
-        location: classItem.location,
-        schedule: classItem.schedule
+        name: trainingClass.name,
+        instructor: trainingClass.trainer._id,
+        time: trainingClass.schedule.time,
+        maxParticipants: trainingClass.maxParticipants,
+        description: trainingClass.description,
+        price: trainingClass.price.amount,
+        level: trainingClass.level,
+        discipline: trainingClass.type
       });
     } else {
-      setSelectedClass(null);
       setFormData({
         name: '',
+        instructor: '',
+        time: '',
+        maxParticipants: '',
         description: '',
-        type: 'dressage',
+        price: '',
         level: 'beginner',
-        trainer: '',
-        maxParticipants: 8,
-        price: {
-          amount: '',
-          currency: 'USD'
-        },
-        location: '',
-        schedule: {
-          time: '',
-          days: [],
-          startDate: '',
-          endDate: ''
-        }
+        discipline: 'western'
       });
     }
     setOpen(true);
@@ -193,188 +110,138 @@ const TrainingClassList = () => {
     setSelectedClass(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedClass) {
-      updateMutation.mutate({ id: selectedClass._id, data: formData });
+      updateMutation.mutate({ id: selectedClass._id, ...formData });
     } else {
       createMutation.mutate(formData);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this training class?')) {
-      deleteMutation.mutate(id);
+    if (window.confirm(t('trainingClass.actions.confirmDelete'))) {
+      try {
+        deleteMutation.mutate(id);
+      } catch (error) {
+        console.error('Error deleting class:', error);
+      }
     }
   };
 
-  const handleExpand = (id) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  if (isLoading || trainersLoading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{t('common.loading')}</Typography>
+      </Box>
+    );
+  }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  if (classesLoading || trainersLoading) return <CircularProgress />;
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">{t('errors.somethingWentWrong')}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Training Classes</Typography>
+        <Typography variant="h4">{t('trainingClass.title')}</Typography>
         <Button
           variant="contained"
           color="primary"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
         >
-          Add New Class
+          {t('trainingClass.addNew')}
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
-        {classes.length === 0 ? (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" align="center">
-                  No training classes available
-                </Typography>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Click the "Add New Class" button to create one
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ) : (
-          classes.map((classItem) => (
-            <Grid item xs={12} sm={6} md={4} key={classItem._id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box>
-                      <Typography variant="h6" component="div">
-                        {classItem.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {classItem.trainer?.username}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <ScheduleIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">
-                      {classItem.schedule?.time} ({classItem.schedule?.days?.join(', ')})
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <GroupIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">
-                      Max Participants: {classItem.maxParticipants}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Chip
-                      label={classItem.type}
-                      color="primary"
-                      size="small"
-                      sx={{ mr: 1 }}
-                    />
-                    <Chip 
-                      label={classItem.level} 
-                      color="secondary" 
-                      size="small" 
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {classItem.description}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        {classes.map((trainingClass) => (
+          <Card key={trainingClass._id} sx={{ width: 300 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {trainingClass.name}
+              </Typography>
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon />
+                  <Typography>{trainingClass.trainer?.username}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AccessTimeIcon />
+                  <Typography>{trainingClass.schedule?.time}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <GroupIcon />
+                  <Typography>
+                    {t('trainingClass.maxParticipants')}: {trainingClass.maxParticipants}
                   </Typography>
-                  <Typography variant="h6" sx={{ mt: 2 }}>
-                    ${classItem.price?.amount} {classItem.price?.currency}
-                  </Typography>
-                </CardContent>
-                <CardActions>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip 
+                    label={t(`trainingClass.level.${trainingClass.level}`)}
+                    color="primary"
+                    size="small"
+                  />
+                  <Chip 
+                    label={t(`trainingClass.discipline.${trainingClass.type}`)}
+                    color="secondary"
+                    size="small"
+                  />
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  {trainingClass.description}
+                </Typography>
+                <Typography variant="h6" color="primary">
+                  USD ${trainingClass.price?.amount}
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                   <IconButton
                     size="small"
-                    onClick={() => handleOpen(classItem)}
+                    color="primary"
+                    onClick={() => handleOpen(trainingClass)}
+                    sx={{ mr: 1 }}
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => handleDelete(classItem._id)}
+                    color="error"
+                    onClick={() => handleDelete(trainingClass._id)}
                   >
                     <DeleteIcon />
                   </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))
-        )}
-      </Grid>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {selectedClass ? 'Edit Training Class' : 'Add New Training Class'}
+          {selectedClass ? t('trainingClass.editClass') : t('trainingClass.addNew')}
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
             <TextField
               fullWidth
-              label="Name"
-              name="name"
+              label={t('trainingClass.name')}
               value={formData.name}
-              onChange={handleInputChange}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               margin="normal"
+              required
             />
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              margin="normal"
-              multiline
-              rows={3}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Type</InputLabel>
+            <FormControl fullWidth margin="normal" required>
+              <InputLabel>{t('trainingClass.instructor')}</InputLabel>
               <Select
-                name="type"
-                value={formData.type}
-                onChange={handleInputChange}
-              >
-                <MenuItem value="dressage">Dressage</MenuItem>
-                <MenuItem value="jumping">Show Jumping</MenuItem>
-                <MenuItem value="eventing">Eventing</MenuItem>
-                <MenuItem value="western">Western</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Level</InputLabel>
-              <Select
-                name="level"
-                value={formData.level}
-                onChange={handleInputChange}
-              >
-                <MenuItem value="beginner">Beginner</MenuItem>
-                <MenuItem value="intermediate">Intermediate</MenuItem>
-                <MenuItem value="advanced">Advanced</MenuItem>
-                <MenuItem value="professional">Professional</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Trainer</InputLabel>
-              <Select
-                name="trainer"
-                value={formData.trainer}
-                onChange={handleInputChange}
+                value={formData.instructor}
+                label={t('trainingClass.instructor')}
+                onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
               >
                 {trainers.map((trainer) => (
                   <MenuItem key={trainer._id} value={trainer._id}>
@@ -385,85 +252,71 @@ const TrainingClassList = () => {
             </FormControl>
             <TextField
               fullWidth
-              label="Maximum Participants"
-              name="maxParticipants"
+              label={t('trainingClass.time')}
+              value={formData.time}
+              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label={t('trainingClass.maxParticipants')}
               type="number"
               value={formData.maxParticipants}
-              onChange={handleInputChange}
+              onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
               margin="normal"
+              required
+            />
+            <FormControl fullWidth margin="normal" required>
+              <InputLabel>{t('trainingClass.level')}</InputLabel>
+              <Select
+                value={formData.level}
+                label={t('trainingClass.level')}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+              >
+                <MenuItem value="beginner">{t('trainingClass.level.beginner')}</MenuItem>
+                <MenuItem value="intermediate">{t('trainingClass.level.intermediate')}</MenuItem>
+                <MenuItem value="advanced">{t('trainingClass.level.advanced')}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal" required>
+              <InputLabel>{t('trainingClass.discipline')}</InputLabel>
+              <Select
+                value={formData.discipline}
+                label={t('trainingClass.discipline')}
+                onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
+              >
+                <MenuItem value="western">{t('trainingClass.discipline.western')}</MenuItem>
+                <MenuItem value="jumping">{t('trainingClass.discipline.jumping')}</MenuItem>
+                <MenuItem value="dressage">{t('trainingClass.discipline.dressage')}</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label={t('trainingClass.description')}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              margin="normal"
+              multiline
+              rows={3}
             />
             <TextField
               fullWidth
-              label="Price (USD)"
-              name="price.amount"
+              label={t('trainingClass.price')}
               type="number"
-              value={formData.price.amount}
-              onChange={handleInputChange}
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               margin="normal"
+              required
             />
-            <TextField
-              fullWidth
-              label="Location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Schedule Time"
-              name="schedule.time"
-              value={formData.schedule.time}
-              onChange={handleInputChange}
-              margin="normal"
-              placeholder="e.g., 09:00-10:00"
-            />
-            <TextField
-              fullWidth
-              label="Schedule Days"
-              name="schedule.days"
-              value={formData.schedule.days.join(', ')}
-              onChange={(e) => {
-                const days = e.target.value.split(',').map(day => day.trim());
-                setFormData({
-                  ...formData,
-                  schedule: {
-                    ...formData.schedule,
-                    days
-                  }
-                });
-              }}
-              margin="normal"
-              placeholder="e.g., Monday, Wednesday"
-            />
-            <TextField
-              fullWidth
-              label="Start Date"
-              name="schedule.startDate"
-              type="date"
-              value={formData.schedule.startDate}
-              onChange={handleInputChange}
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              fullWidth
-              label="End Date"
-              name="schedule.endDate"
-              type="date"
-              value={formData.schedule.endDate}
-              onChange={handleInputChange}
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            {selectedClass ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="contained" color="primary">
+              {selectedClass ? t('common.save') : t('common.add')}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Box>
   );

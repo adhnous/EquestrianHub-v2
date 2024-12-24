@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { CacheProvider } from '@emotion/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import CssBaseline from '@mui/material/CssBaseline';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { useTranslation } from 'react-i18next';
-import theme, { createRtlTheme, createRtlCache } from './theme';
+import { CacheProvider } from '@emotion/react';
+import theme, { createRtlCache } from './theme';
 import './i18n';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -20,9 +20,6 @@ const HorseManagement = React.lazy(() => import('./pages/HorseManagement'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const MainLayout = React.lazy(() => import('./layouts/MainLayout'));
 
-// Create rtl cache
-const rtlCache = createRtlCache();
-
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,23 +31,26 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
+const App = () => {
   const { i18n } = useTranslation();
-  const [currentTheme, setCurrentTheme] = React.useState(theme);
+  const rtlCache = createRtlCache();
+  const currentTheme = theme;
 
   useEffect(() => {
-    // Update theme direction based on language
-    const isRtl = i18n.language === 'ar';
-    document.dir = isRtl ? 'rtl' : 'ltr';
-    setCurrentTheme(isRtl ? createRtlTheme() : theme);
+    document.dir = i18n.dir();
   }, [i18n.language]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <CacheProvider value={rtlCache}>
-        <ThemeProvider theme={currentTheme}>
-          <CssBaseline />
-          <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <CacheProvider value={rtlCache}>
+          <ThemeProvider theme={currentTheme}>
+            <CssBaseline />
             <React.Suspense fallback={<LoadingSpinner size="medium" message="Loading application..." />}>
               <Routes>
                 <Route path="/login" element={<Login />} />
@@ -66,11 +66,11 @@ function App() {
                 </Route>
               </Routes>
             </React.Suspense>
-          </BrowserRouter>
-        </ThemeProvider>
-      </CacheProvider>
-    </QueryClientProvider>
+          </ThemeProvider>
+        </CacheProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

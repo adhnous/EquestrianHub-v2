@@ -27,15 +27,69 @@
     "inactive": "غير نشط",
     "name": "الاسم",
     "certifications": "الشهادات",
-    "confirmDelete": "هل أنت متأكد من حذف هذا العنصر؟"
+    "confirmDelete": "هل أنت متأكد من حذف هذا العنصر؟",
+    "monday": "الإثنين",
+    "mondayHelperText": "ساعات العمل يوم الإثنين",
+    "tuesday": "الثلاثاء",
+    "tuesdayHelperText": "ساعات العمل يوم الثلاثاء",
+    "wednesday": "الأربعاء",
+    "wednesdayHelperText": "ساعات العمل يوم الأربعاء",
+    "thursday": "الخميس",
+    "thursdayHelperText": "ساعات العمل يوم الخميس",
+    "friday": "الجمعة",
+    "fridayHelperText": "ساعات العمل يوم الجمعة",
+    "saturday": "السبت",
+    "saturdayHelperText": "ساعات العمل يوم السبت",
+    "sunday": "الأحد",
+    "sundayHelperText": "ساعات العمل يوم الأحد",
+    "search": "بحث",
+    "filter": "تصفية",
+    "closeDrawer": "إغلاق القائمة",
+    "settings": "الإعدادات",
+    "basicInformation": "المعلومات الأساسية",
+    "availability": "الجدول المتاح",
+    "availabilityHelperText": "حدد الأيام والساعات المتاحة للتدريب",
+    "certificationsHelperText": "أدخل الشهادات والمؤهلات المهنية"
   },
   "horse": {
-    "addHorse": "إضافة حصان",
+    "title": "إدارة الخيول",
+    "management": "إدارة الخيول",
+    "addNew": "إضافة حصان جديد",
     "editHorse": "تعديل الحصان",
+    "name": "اسم الحصان",
     "breed": "السلالة",
     "age": "العمر",
     "color": "اللون",
-    "gender": "الجنس",
+    "healthStatus": "الحالة الصحية",
+    "yearOld": "سنة",
+    "yearsOld": "سنوات",
+    "status": {
+      "healthy": "سليم",
+      "sick": "مريض",
+      "injured": "مصاب",
+      "recovery": "في مرحلة التعافي",
+      "checkup": "يحتاج لفحص"
+    },
+    "breeds": {
+      "arabian": "عربي",
+      "thoroughbred": "ثوروبريد",
+      "quarterHorse": "كوارتر",
+      "hanoverian": "هانوفري",
+      "warmblood": "وارم بلد"
+    },
+    "colors": {
+      "bay": "كستنائي",
+      "black": "أسود",
+      "chestnut": "أحمر",
+      "grey": "رمادي",
+      "palomino": "ذهبي"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "confirmDelete": "هل أنت متأكد من حذف هذا الحصان؟"
+    },
+    "noHorsesFound": "لم يتم العثور على خيول. انقر على \"إضافة حصان جديد\" لإضافة واحد.",
     "genders": {
       "mare": "فرس",
       "stallion": "حصان",
@@ -57,23 +111,33 @@
     "imageUrl": "رابط الصورة",
     "basicInformation": "المعلومات الأساسية",
     "healthInformation": "المعلومات الصحية",
-    "noHorsesFound": "لم يتم العثور على خيول. انقر على \"إضافة حصان\" لإضافة واحد.",
     "heightHelperText": "الارتفاع بالسنتيمتر",
     "weightHelperText": "الوزن بالكيلوغرام",
     "ageHelperText": "العمر بالسنوات",
     "imageUrlHelperText": "رابط صورة الحصان (اختياري)"
   },
   "trainer": {
+    "title": "المدربون",
+    "addNew": "إضافة مدرب جديد",
     "addTrainer": "إضافة مدرب",
     "editTrainer": "تعديل المدرب",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "professionalDetails": "التفاصيل المهنية",
+    "experience": "سنوات الخبرة",
+    "certifications": "الشهادات",
     "specialization": "التخصص",
     "specializations": {
-      "jumping": "قفز الحواجز",
-      "dressage": "الترويض",
-      "general": "عام"
+      "dressage": "ترويض",
+      "jumping": "قفز",
+      "eventing": "فروسية شاملة",
+      "western": "ركوب غربي",
+      "endurance": "تحمل",
+      "vaulting": "جمباز على ظهر الخيل",
+      "general": "تدريب عام"
     },
-    "availability": "أوقات العمل",
-    "days": {
+    "availability": {
       "monday": "الإثنين",
       "tuesday": "الثلاثاء",
       "wednesday": "الأربعاء",
@@ -81,7 +145,57 @@
       "friday": "الجمعة",
       "saturday": "السبت",
       "sunday": "الأحد"
-    }
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "confirmDelete": "هل أنت متأكد من حذف هذا المدرب؟"
+    },
+    "noTrainersFound": "لم يتم العثور على مدربين. انقر على \"إضافة مدرب جديد\" لإضافة واحد."
+  },
+  "competition": {
+    "management": "إدارة المسابقات",
+    "addNew": "إضافة مسابقة جديدة",
+    "editCompetition": "تعديل المسابقة",
+    "name": "اسم المسابقة",
+    "date": "تاريخ المسابقة",
+    "time": "وقت المسابقة",
+    "location": "موقع المسابقة",
+    "type": "نوع المسابقة",
+    "level": "مستوى المسابقة",
+    "maxParticipants": "الحد الأقصى للمشاركين",
+    "currentParticipants": "المشاركون الحاليون",
+    "registrationDeadline": "الموعد النهائي للتسجيل",
+    "description": "الوصف",
+    "prize": "الجائزة",
+    "status": "الحالة",
+    "types": {
+      "dressage": "ترويض",
+      "jumping": "قفز",
+      "endurance": "تحمل",
+      "reining": "ترويض غربي",
+      "vaulting": "جمباز على ظهر الخيل"
+    },
+    "levels": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم",
+      "professional": "محترف"
+    },
+    "statuses": {
+      "upcoming": "قادم",
+      "ongoing": "جاري",
+      "completed": "منتهي",
+      "cancelled": "ملغي"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "register": "تسجيل",
+      "withdraw": "انسحاب",
+      "confirmDelete": "هل أنت متأكد من حذف هذه المسابقة؟"
+    },
+    "noCompetitionsFound": "لم يتم العثور على مسابقات. انقر على \"إضافة مسابقة جديدة\" لإنشاء واحدة."
   },
   "dashboard": {
     "upcomingClasses": "الحصص القادمة",
@@ -90,17 +204,58 @@
     "welcomeMessage": "مرحباً بك في مركز الفروسية"
   },
   "trainingClass": {
+    "title": "حصص التدريب",
+    "addNew": "إضافة حصة جديدة",
+    "editClass": "تعديل الحصة",
     "name": "اسم الحصة",
-    "description": "الوصف",
-    "type": "النوع",
-    "level": "المستوى",
-    "trainer": "المدرب",
-    "schedule": "الجدول",
-    "price": "السعر",
-    "location": "الموقع",
-    "enrolledTrainees": "المتدربون المسجلون",
+    "instructor": "المدرب",
+    "time": "الوقت",
     "maxParticipants": "الحد الأقصى للمشاركين",
-    "status": "الحالة"
+    "description": "الوصف",
+    "price": "السعر",
+    "level": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "discipline": {
+      "western": "ركوب غربي",
+      "jumping": "قفز",
+      "dressage": "ترويض"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "confirmDelete": "هل أنت متأكد من حذف هذه الحصة؟"
+    },
+    "noClassesFound": "لم يتم العثور على حصص. انقر على \"إضافة حصة جديدة\" لإنشاء واحدة."
+  },
+  "trainee": {
+    "title": "المتدربون",
+    "addTrainee": "إضافة متدرب",
+    "editTrainee": "تعديل بيانات المتدرب",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "level": "المستوى",
+    "preferredDiscipline": "التخصص المفضل",
+    "emergencyContact": "جهة اتصال للطوارئ",
+    "trainer": "المدرب",
+    "noTraineesFound": "لم يتم العثور على متدربين. انقر على \"إضافة متدرب\" لإنشاء واحد.",
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "level": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "confirmDelete": "هل أنت متأكد من حذف هذا المتدرب؟"
+    }
   },
   "errors": {
     "required": "هذا الحقل مطلوب",

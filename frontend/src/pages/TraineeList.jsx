@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -18,7 +19,8 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  IconButton,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
@@ -31,6 +33,7 @@ import {
 } from '../services/api';
 
 const TraineeList = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
   const [formData, setFormData] = useState({
@@ -155,7 +158,7 @@ const TraineeList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this trainee?')) {
+    if (window.confirm(t('trainee.actions.confirmDelete'))) {
       deleteMutation.mutate(id);
     }
   };
@@ -186,7 +189,7 @@ const TraineeList = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Trainees
+          {t('trainee.title')}
         </Typography>
         <Button
           variant="contained"
@@ -197,7 +200,7 @@ const TraineeList = () => {
             setOpen(true);
           }}
         >
-          Add Trainee
+          {t('trainee.addTrainee')}
         </Button>
       </Box>
 
@@ -223,11 +226,11 @@ const TraineeList = () => {
                     {trainee.email}
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    Phone: {trainee.phone}
+                    {t('trainee.phone')}: {trainee.phone}
                   </Typography>
                   {trainee.trainer && (
                     <Typography variant="body2" gutterBottom>
-                      Trainer: {trainee.trainer.name}
+                      {t('trainee.trainer')}: {trainee.trainer.name}
                     </Typography>
                   )}
                   <Box sx={{ mt: 2 }}>
@@ -239,21 +242,21 @@ const TraineeList = () => {
                   </Box>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                  <Button
+                  <IconButton
                     size="small"
-                    startIcon={<EditIcon />}
+                    color="primary"
                     onClick={() => handleEdit(trainee)}
+                    sx={{ mr: 1 }}
                   >
-                    Edit
-                  </Button>
-                  <Button
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
                     size="small"
                     color="error"
-                    startIcon={<DeleteIcon />}
                     onClick={() => handleDelete(trainee._id)}
                   >
-                    Delete
-                  </Button>
+                    <DeleteIcon />
+                  </IconButton>
                 </CardActions>
               </Card>
             </Grid>
@@ -267,7 +270,7 @@ const TraineeList = () => {
               borderRadius: 1
             }}>
               <Typography color="textSecondary">
-                No trainees found. Click "Add Trainee" to create one.
+                {t('trainee.noTraineesFound')}
               </Typography>
             </Box>
           </Grid>
@@ -276,14 +279,14 @@ const TraineeList = () => {
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {selectedTrainee ? 'Edit Trainee' : 'Add Trainee'}
+          {selectedTrainee ? t('trainee.editTrainee') : t('trainee.addTrainee')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
               autoFocus
               margin="dense"
-              label="Name"
+              label={t('trainee.name')}
               fullWidth
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -291,7 +294,7 @@ const TraineeList = () => {
             />
             <TextField
               margin="dense"
-              label="Email"
+              label={t('trainee.email')}
               type="email"
               fullWidth
               value={formData.email}
@@ -300,29 +303,29 @@ const TraineeList = () => {
             />
             <TextField
               margin="dense"
-              label="Phone"
+              label={t('trainee.phone')}
               fullWidth
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
             />
             <FormControl fullWidth margin="dense">
-              <InputLabel>Level</InputLabel>
+              <InputLabel>{t('trainee.level')}</InputLabel>
               <Select
                 value={formData.level}
-                label="Level"
+                label={t('trainee.level')}
                 onChange={(e) =>
                   setFormData({ ...formData, level: e.target.value })
                 }
               >
-                <MenuItem value="beginner">Beginner</MenuItem>
-                <MenuItem value="intermediate">Intermediate</MenuItem>
-                <MenuItem value="advanced">Advanced</MenuItem>
+                <MenuItem value="beginner">{t('trainee.level.beginner')}</MenuItem>
+                <MenuItem value="intermediate">{t('trainee.level.intermediate')}</MenuItem>
+                <MenuItem value="advanced">{t('trainee.level.advanced')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
               margin="dense"
-              label="Preferred Discipline"
+              label={t('trainee.preferredDiscipline')}
               fullWidth
               value={formData.preferredDiscipline}
               onChange={(e) =>
@@ -332,7 +335,7 @@ const TraineeList = () => {
             />
             <TextField
               margin="dense"
-              label="Emergency Contact"
+              label={t('trainee.emergencyContact')}
               fullWidth
               value={formData.emergencyContact}
               onChange={(e) =>
@@ -342,9 +345,9 @@ const TraineeList = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>{t('common.cancel')}</Button>
             <Button type="submit" color="primary">
-              {selectedTrainee ? 'Update' : 'Create'}
+              {selectedTrainee ? t('common.save') : t('common.add')}
             </Button>
           </DialogActions>
         </form>

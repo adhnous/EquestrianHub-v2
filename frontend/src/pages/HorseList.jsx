@@ -5,62 +5,57 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
   Typography,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
-  TextField,
   DialogActions,
-  IconButton,
-  Alert,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
+  Stack,
 } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-  Pets as HorseIcon,
-  CalendarMonth as AgeIcon,
-  ColorLens as ColorIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PetsIcon from '@mui/icons-material/Pets';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ColorLensIcon from '@mui/icons-material/ColorLens';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { getHorses, createHorse, updateHorse, deleteHorse } from '../services/api';
 
-const HorseManagement = () => {
+const HorseList = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedHorse, setSelectedHorse] = useState(null);
-  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     breed: '',
     age: '',
     color: '',
-    gender: 'mare',
-    registrationNumber: '',
-    healthStatus: 'healthy',
-    specialNeeds: '',
-    owner: '',
+    healthStatus: 'healthy'
   });
 
   const queryClient = useQueryClient();
 
-  const { data: horses = [], isLoading } = useQuery('horses', getHorses, {
-    select: (response) => response?.data?.horses || [],
-    onError: (err) => setError(err.message),
-  });
+  const { data: horses = [], isLoading, error } = useQuery(
+    'horses',
+    async () => {
+      const response = await getHorses();
+      console.log('Raw horse response:', response);
+      return response?.data?.horses || [];
+    }
+  );
 
   const createMutation = useMutation(createHorse, {
     onSuccess: () => {
       queryClient.invalidateQueries('horses');
       handleClose();
     },
-    onError: (err) => setError(err.message),
   });
 
   const updateMutation = useMutation(
@@ -70,7 +65,6 @@ const HorseManagement = () => {
         queryClient.invalidateQueries('horses');
         handleClose();
       },
-      onError: (err) => setError(err.message),
     }
   );
 
@@ -78,23 +72,17 @@ const HorseManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries('horses');
     },
-    onError: (err) => setError(err.message),
   });
 
   const handleOpen = (horse = null) => {
     setSelectedHorse(horse);
-    setError(null);
     if (horse) {
       setFormData({
         name: horse.name,
         breed: horse.breed,
         age: horse.age,
         color: horse.color,
-        gender: horse.gender || 'mare',
-        registrationNumber: horse.registrationNumber || '',
-        healthStatus: horse.healthStatus || 'healthy',
-        specialNeeds: horse.specialNeeds || '',
-        owner: horse.owner || '',
+        healthStatus: horse.healthStatus
       });
     } else {
       setFormData({
@@ -102,11 +90,7 @@ const HorseManagement = () => {
         breed: '',
         age: '',
         color: '',
-        gender: 'mare',
-        registrationNumber: '',
-        healthStatus: 'healthy',
-        specialNeeds: '',
-        owner: '',
+        healthStatus: 'healthy'
       });
     }
     setOpen(true);
@@ -115,37 +99,43 @@ const HorseManagement = () => {
   const handleClose = () => {
     setOpen(false);
     setSelectedHorse(null);
-    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
     try {
       if (selectedHorse) {
-        await updateMutation.mutateAsync({ ...formData, id: selectedHorse._id });
+        await updateMutation.mutate({ ...formData, id: selectedHorse._id });
       } else {
-        await createMutation.mutateAsync(formData);
+        await createMutation.mutate(formData);
       }
-    } catch (err) {
-      console.error('Error saving horse:', err);
+    } catch (error) {
+      console.error('Error saving horse:', error);
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm(t('horse.actions.confirmDelete'))) {
       try {
-        await deleteMutation.mutateAsync(id);
-      } catch (err) {
-        setError(err.message);
+        await deleteMutation.mutate(id);
+      } catch (error) {
+        console.error('Error deleting horse:', error);
       }
     }
   };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
+      <Box sx={{ p: 3 }}>
+        <Typography>{t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">{t('errors.somethingWentWrong')}</Typography>
       </Box>
     );
   }
@@ -164,59 +154,54 @@ const HorseManagement = () => {
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         {horses.map((horse) => (
-          <Grid item xs={12} sm={6} md={4} key={horse._id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">{horse.name}</Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <HorseIcon sx={{ mr: 1 }} />
-                    <Typography>{t(`horse.breeds.${horse.breed.toLowerCase()}`)}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <AgeIcon sx={{ mr: 1 }} />
-                    <Typography>
-                      {horse.age} {t('horse.yearsOld')}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <ColorIcon sx={{ mr: 1 }} />
-                    <Typography>{t(`horse.colors.${horse.color.toLowerCase()}`)}</Typography>
-                  </Box>
-                  <Typography color="textSecondary">
+          <Card key={horse._id} sx={{ width: 300 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {horse.name}
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PetsIcon />
+                  <Typography>{t(`horse.breeds.${horse.breed.toLowerCase()}`)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarMonthIcon />
+                  <Typography>{t('horse.age')}: {horse.age} {horse.age > 1 ? t('horse.yearsOld') : t('horse.yearOld')}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ColorLensIcon />
+                  <Typography>{t(`horse.colors.${horse.color.toLowerCase()}`)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocalHospitalIcon />
+                  <Typography>
                     {t('horse.healthStatus')}: {t(`horse.status.${horse.healthStatus.toLowerCase()}`)}
                   </Typography>
                 </Box>
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleOpen(horse)}
-                    sx={{ mr: 1 }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(horse._id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => handleOpen(horse)}
+                  sx={{ mr: 1 }}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleDelete(horse._id)}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -239,11 +224,11 @@ const HorseManagement = () => {
                 label={t('horse.breed')}
                 onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
               >
-                <MenuItem value="Arabian">{t('horse.breeds.arabian')}</MenuItem>
-                <MenuItem value="Thoroughbred">{t('horse.breeds.thoroughbred')}</MenuItem>
-                <MenuItem value="QuarterHorse">{t('horse.breeds.quarterHorse')}</MenuItem>
-                <MenuItem value="Hanoverian">{t('horse.breeds.hanoverian')}</MenuItem>
-                <MenuItem value="Warmblood">{t('horse.breeds.warmblood')}</MenuItem>
+                <MenuItem value="arabian">{t('horse.breeds.arabian')}</MenuItem>
+                <MenuItem value="quarterHorse">{t('horse.breeds.quarterHorse')}</MenuItem>
+                <MenuItem value="thoroughbred">{t('horse.breeds.thoroughbred')}</MenuItem>
+                <MenuItem value="hanoverian">{t('horse.breeds.hanoverian')}</MenuItem>
+                <MenuItem value="warmblood">{t('horse.breeds.warmblood')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
@@ -262,11 +247,11 @@ const HorseManagement = () => {
                 label={t('horse.color')}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
               >
-                <MenuItem value="Bay">{t('horse.colors.bay')}</MenuItem>
-                <MenuItem value="Black">{t('horse.colors.black')}</MenuItem>
-                <MenuItem value="Chestnut">{t('horse.colors.chestnut')}</MenuItem>
-                <MenuItem value="Grey">{t('horse.colors.grey')}</MenuItem>
-                <MenuItem value="Palomino">{t('horse.colors.palomino')}</MenuItem>
+                <MenuItem value="bay">{t('horse.colors.bay')}</MenuItem>
+                <MenuItem value="black">{t('horse.colors.black')}</MenuItem>
+                <MenuItem value="chestnut">{t('horse.colors.chestnut')}</MenuItem>
+                <MenuItem value="grey">{t('horse.colors.grey')}</MenuItem>
+                <MenuItem value="palomino">{t('horse.colors.palomino')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth margin="normal" required>
@@ -277,10 +262,9 @@ const HorseManagement = () => {
                 onChange={(e) => setFormData({ ...formData, healthStatus: e.target.value })}
               >
                 <MenuItem value="healthy">{t('horse.status.healthy')}</MenuItem>
+                <MenuItem value="recovery">{t('horse.status.recovery')}</MenuItem>
                 <MenuItem value="sick">{t('horse.status.sick')}</MenuItem>
                 <MenuItem value="injured">{t('horse.status.injured')}</MenuItem>
-                <MenuItem value="recovery">{t('horse.status.recovery')}</MenuItem>
-                <MenuItem value="checkup">{t('horse.status.checkup')}</MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
@@ -296,4 +280,4 @@ const HorseManagement = () => {
   );
 };
 
-export default HorseManagement;
+export default HorseList;
