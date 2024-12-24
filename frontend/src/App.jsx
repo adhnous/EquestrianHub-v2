@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { useTranslation } from 'react-i18next';
 import theme, { createRtlTheme, createRtlCache } from './theme';
 import './i18n';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // Lazy load components
 const Login = React.lazy(() => import('./pages/Login'));
@@ -50,7 +51,7 @@ function App() {
         <ThemeProvider theme={currentTheme}>
           <CssBaseline />
           <BrowserRouter>
-            <React.Suspense fallback={<div>Loading...</div>}>
+            <React.Suspense fallback={<LoadingSpinner size="medium" message="Loading application..." />}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<MainLayout />}>
