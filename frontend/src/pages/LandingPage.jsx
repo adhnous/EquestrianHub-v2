@@ -9,7 +9,6 @@ import {
   CardContent,
   useTheme,
 } from '@mui/material';
-import backgroundImage from '../assets/images/horse-forest.jpg';
 
 const LandingPage = () => {
   const { t, i18n } = useTranslation();
@@ -22,147 +21,150 @@ const LandingPage = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        width: '100%',
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundImage: 'url(https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         position: 'relative',
         direction: i18n.language === 'ar' ? 'rtl' : 'ltr',
-      }}
-    >
-      <Box
-        sx={{
+        '&::before': {
+          content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        }}
-      />
+          zIndex: 1
+        }
+      }}
+    >
       <Card
         sx={{
+          position: 'relative',
+          zIndex: 2,
           maxWidth: 600,
           width: '90%',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
-          position: 'relative',
+          p: 4,
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           textAlign: 'center',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h4" 
-              component="div" 
-              gutterBottom
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit',
-                fontWeight: 600
-              }}
-            >
-              {t('university.name')}
-            </Typography>
-            <Typography 
-              variant="h5" 
-              color="text.secondary" 
-              gutterBottom
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('faculty.name')}
-            </Typography>
-            <Typography 
-              variant="h6" 
-              color="text.secondary" 
-              gutterBottom
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.title')}
-            </Typography>
-          </Box>
+        <Box sx={{ mb: 3 }}>
+          <Typography 
+            variant="h4" 
+            component="div" 
+            gutterBottom
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit',
+              fontWeight: 600
+            }}
+          >
+            {t('university.name')}
+          </Typography>
+          <Typography 
+            variant="h5" 
+            color="text.secondary" 
+            gutterBottom
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('faculty.name')}
+          </Typography>
+          <Typography 
+            variant="h6" 
+            color="text.secondary" 
+            gutterBottom
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.title')}
+          </Typography>
+        </Box>
 
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="body1" 
-              paragraph
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.description')}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.students')}:
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.student1')}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ 
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.student2')}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              sx={{ 
-                mt: 1,
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('project.supervisor')}: {t('project.supervisorName')}
-            </Typography>
-          </Box>
+        <Box sx={{ mb: 4 }}>
+          <Typography 
+            variant="body1" 
+            paragraph
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.description')}
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.students')}:
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.student1')}
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.student2')}
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              mt: 1,
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('project.supervisor')}: {t('project.supervisorName')}
+          </Typography>
+        </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              component={Link}
-              to="/login"
-              sx={{ 
-                minWidth: 120,
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {t('auth.login')}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleLanguageToggle}
-              sx={{ 
-                minWidth: 120,
-                fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
-              }}
-            >
-              {i18n.language === 'ar' ? 'English' : 'العربية'}
-            </Button>
-          </Box>
-        </CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            component={Link}
+            to="/login"
+            sx={{ 
+              minWidth: 120,
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {t('auth.login')}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleLanguageToggle}
+            sx={{ 
+              minWidth: 120,
+              fontFamily: i18n.language === 'ar' ? 'Cairo, sans-serif' : 'inherit'
+            }}
+          >
+            {i18n.language === 'ar' ? 'English' : 'العربية'}
+          </Button>
+        </Box>
       </Card>
     </Box>
   );

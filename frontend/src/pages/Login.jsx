@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import useAuthStore from '../store/authStore';
-import './Login.css';
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -81,17 +80,41 @@ const Login = () => {
 
   return (
     <Box 
-      className="login-container"
       sx={{
-        background: `url('https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat`,
-        minHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        direction: isRTL ? 'rtl' : 'ltr',
+        backgroundImage: 'url(https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          zIndex: 1
+        }
       }}
     >
-      <Card className="login-card" sx={{ maxWidth: 400, width: '90%' }}>
+      <Card 
+        sx={{ 
+          position: 'relative',
+          zIndex: 2,
+          maxWidth: 400, 
+          width: '90%',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          p: 4,
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <Typography 
             variant="h5" 
