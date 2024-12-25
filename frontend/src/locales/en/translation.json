@@ -1,5 +1,9 @@
 {
+  "project": {
+    "title": "Equestrian Academy"
+  },
   "common": {
+    "appTitle": "Equestrian Hub",
     "dashboard": "Dashboard",
     "trainingClasses": "Training Classes",
     "competitions": "Competitions",
@@ -16,7 +20,40 @@
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "openDrawer": "Open Menu",
+    "userAccount": "User Account",
+    "add": "Add",
+    "phone": "Phone",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "name": "Name",
+    "certifications": "Certifications",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "noTrainers": "No trainers available",
+    "noTrainees": "No trainees available",
+    "noHorses": "No horses available",
+    "noCompetitions": "No competitions available",
+    "noClasses": "No training classes available"
+  },
+  "trainer": {
+    "addTrainer": "Add Trainer",
+    "editTrainer": "Edit Trainer",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "password": "Password",
+    "specialization": "Specialization",
+    "specializations": {
+      "general": "General",
+      "dressage": "Dressage",
+      "jumping": "Show Jumping",
+      "eventing": "Eventing"
+    },
+    "status": "Status",
+    "certifications": "Certifications",
+    "availability": "Availability"
   },
   "auth": {
     "username": "Username",
@@ -53,5 +90,14 @@
     "invalidEmail": "Invalid email address",
     "invalidCredentials": "Invalid email or password",
     "somethingWentWrong": "Something went wrong"
+  },
+  "horse": {
+    "breeds": {
+      "arabian": "Arabian",
+      "thoroughbred": "Thoroughbred",
+      "quarter_horse": "Quarter Horse",
+      "warmblood": "Warmblood",
+      "other": "Other"
+    }
   }
 }

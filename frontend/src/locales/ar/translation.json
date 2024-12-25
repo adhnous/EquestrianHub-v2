@@ -59,7 +59,12 @@
     "language": "اللغة",
     "theme": "المظهر",
     "dark": "داكن",
-    "light": "فاتح"
+    "light": "فاتح",
+    "noTrainers": "لا يوجد مدربون",
+    "noTrainees": "لا يوجد متدربون",
+    "noHorses": "لا يوجد خيول",
+    "noCompetitions": "لا يوجد مسابقات",
+    "noClasses": "لا يوجد حصص تدريبية"
   },
   "university": {
     "name": "جامعة طرابلس",
@@ -69,7 +74,7 @@
     "name": "كلية تقنية المعلومات"
   },
   "project": {
-    "title": "نظام إدارة أكاديمية جامعة طرابلس للفروسية",
+    "title": "أكاديمية الفروسية",
     "description": "مشروع مقدم لقسم هندسة البرمجيات لاستيفاء متطلبات درجة البكالوريوس",
     "students": "إعداد الطلاب",
     "student1": "نهال محمد المبروك الجبير - رقم القيد: 2191807474",
@@ -120,9 +125,10 @@
     "breeds": {
       "arabian": "عربي",
       "thoroughbred": "ثوروبريد",
-      "quarterHorse": "كوارتر",
-      "hanoverian": "هانوفري",
-      "warmblood": "وارم بلد"
+      "quarter_horse": "كوارتر هورس",
+      "warmblood": "وارم بلود",
+      "other": "أخرى",
+      "hanoverian": "هانوفري"
     },
     "colors": {
       "bay": "كستنائي",
@@ -176,13 +182,13 @@
     "certifications": "الشهادات",
     "specialization": "التخصص",
     "specializations": {
+      "general": "عام",
       "dressage": "ترويض",
-      "jumping": "قفز",
-      "eventing": "فروسية شاملة",
+      "jumping": "قفز الحواجز",
+      "eventing": "الفروسية الشاملة",
       "western": "ركوب غربي",
       "endurance": "تحمل",
-      "vaulting": "جمباز على ظهر الخيل",
-      "general": "تدريب عام"
+      "vaulting": "جمباز على ظهر الخيل"
     },
     "availability": {
       "monday": "الإثنين",

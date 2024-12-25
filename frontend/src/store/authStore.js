@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { login as apiLogin, logout as apiLogout } from '../services/api';
 
-// Clear any existing auth data on store initialization
-localStorage.removeItem('token');
-localStorage.removeItem('user');
+// Try to get existing auth data
+const storedToken = localStorage.getItem('token');
+const storedUser = localStorage.getItem('user');
 
 const useAuthStore = create((set) => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
+  user: storedUser ? JSON.parse(storedUser) : null,
+  token: storedToken || null,
+  isAuthenticated: !!(storedToken && storedUser),
   isLoading: false,
   error: null,
 
@@ -49,11 +49,11 @@ const useAuthStore = create((set) => ({
       localStorage.removeItem('user');
       
       set({
-        isLoading: false,
-        error: errorMessage,
         user: null,
         token: null,
         isAuthenticated: false,
+        isLoading: false,
+        error: errorMessage,
       });
       
       throw error;
@@ -61,6 +61,7 @@ const useAuthStore = create((set) => ({
   },
 
   logout: () => {
+    apiLogout();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     set({

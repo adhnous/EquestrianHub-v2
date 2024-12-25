@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
   Card,
   CardContent,
-  CardActions,
   Grid,
   Typography,
   Dialog,
@@ -20,8 +19,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Divider,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
@@ -35,72 +33,42 @@ const TrainerList = () => {
     name: '',
     email: '',
     phone: '',
-    password: '',  
+    password: '',
     specialization: 'general',
     certifications: [],
-    availability: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: []
-    },
     status: 'active'
   });
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const queryClient = useQueryClient();
 
-  const { data: trainers = [], isLoading, error: queryError } = useQuery(
-    'trainers',
-    async () => {
-      const response = await getTrainers();
-      console.log('Raw trainer response:', response); // Debug full response
-      if (response?.data?.success && Array.isArray(response.data.trainers)) {
-        return response.data.trainers;
-      }
-      console.log('Fallback to empty array, response was:', response?.data);
-      return [];
-    },
-    {
-      onError: (error) => {
-        console.error('Error fetching trainers:', error);
-        setError(error.response?.data?.message || 'Failed to fetch trainers');
-      },
-      staleTime: 0, // Consider data stale immediately
-      cacheTime: 0, // Don't cache at all
-      refetchOnMount: true, // Always refetch on mount
-      refetchOnWindowFocus: true // Refetch when window regains focus
-    }
-  );
+  const { data: trainersResponse, isLoading } = useQuery('trainers', async () => {
+    const response = await getTrainers();
+    return response.data;
+  });
 
-  // Debug log for trainers data
-  useEffect(() => {
-    console.log('Current trainers:', trainers);
-  }, [trainers]);
+  const trainers = trainersResponse?.trainers || [];
 
   const createTrainerMutation = useMutation(
     (newTrainer) => createTrainer(newTrainer),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('trainers');
+        handleClose();
       },
     }
   );
 
   const updateTrainerMutation = useMutation(
-    (updatedTrainer) => updateTrainer(updatedTrainer.id, updatedTrainer),
+    (updatedTrainer) => updateTrainer(updatedTrainer._id, updatedTrainer),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('trainers');
+        handleClose();
       },
     }
   );
 
-  const deleteMutation = useMutation(
+  const deleteTrainerMutation = useMutation(
     (trainerId) => deleteTrainer(trainerId),
     {
       onSuccess: () => {
@@ -116,31 +84,9 @@ const TrainerList = () => {
         name: trainer.name,
         email: trainer.email,
         phone: trainer.phone,
-        password: trainer.password,
         specialization: trainer.specialization,
-        certifications: trainer.certifications,
-        availability: trainer.availability,
+        certifications: trainer.certifications || [],
         status: trainer.status
-      });
-    } else {
-      setSelectedTrainer(null);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',  
-        specialization: 'general',
-        certifications: [],
-        availability: {
-          monday: [],
-          tuesday: [],
-          wednesday: [],
-          thursday: [],
-          friday: [],
-          saturday: [],
-          sunday: []
-        },
-        status: 'active'
       });
     }
     setOpen(true);
@@ -149,299 +95,343 @@ const TrainerList = () => {
   const handleClose = () => {
     setOpen(false);
     setSelectedTrainer(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      specialization: 'general',
+      certifications: [],
+      status: 'active'
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      if (selectedTrainer) {
-        await updateTrainerMutation.mutateAsync({
-          id: selectedTrainer._id,
-          data: formData
-        });
-      } else {
-        await createTrainerMutation.mutateAsync(formData);
-      }
-      setOpen(false);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',  
-        specialization: 'general',
-        certifications: [],
-        availability: {
-          monday: [],
-          tuesday: [],
-          wednesday: [],
-          thursday: [],
-          friday: [],
-          saturday: [],
-          sunday: []
-        },
-        status: 'active'
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      setError(error.response?.data?.message || 'An error occurred');
-    } finally {
-      setLoading(false);
+    if (selectedTrainer) {
+      updateTrainerMutation.mutate({ ...formData, _id: selectedTrainer._id });
+    } else {
+      createTrainerMutation.mutate(formData);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (trainerId) => {
     if (window.confirm(t('common.confirmDelete'))) {
-      try {
-        await deleteMutation.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting trainer:', error);
-      }
+      deleteTrainerMutation.mutate(trainerId);
     }
-  };
-
-  const handleEdit = (trainer) => {
-    handleOpen(trainer);
   };
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        minHeight: '200px'
+      }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  if (queryError) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          {queryError.response?.data?.message || 'Error loading trainers. Please try again later.'}
-        </Alert>
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ 
+      p: 4,
+      maxWidth: '1200px',
+      margin: '0 auto'
+    }}>
+      {/* Header */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 4,
+        pb: 2,
+        borderBottom: '1px solid',
+        borderColor: 'divider'
+      }}>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          sx={{ 
+            fontWeight: 600,
+            color: 'primary.main'
+          }}
+        >
           {t('common.trainers')}
         </Typography>
         <Button
           variant="contained"
-          color="primary"
           startIcon={<AddIcon />}
-          onClick={() => {
-            setSelectedTrainer(null);
-            setOpen(true);
+          onClick={() => handleOpen()}
+          sx={{
+            borderRadius: '8px',
+            px: 3,
+            py: 1,
+            textTransform: 'none',
+            fontSize: '1rem'
           }}
         >
           {t('trainer.addTrainer')}
         </Button>
       </Box>
 
+      {/* Trainer Grid */}
       <Grid container spacing={3}>
-        {Array.isArray(trainers) && trainers.length > 0 ? (
+        {trainers && trainers.length > 0 ? (
           trainers.map((trainer) => (
-            <Grid item xs={12} sm={6} md={4} key={trainer._id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
+            <Grid item xs={12} sm={12} md={6} key={trainer._id}>
+              <Card sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '12px',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  flexGrow: 1,
                   display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    boxShadow: 6
-                  }
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {trainer.name}
-                  </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    {trainer.email}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {t('common.phone')}: {trainer.phone}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {t('trainer.specialization')}: {t(`trainer.specializations.${trainer.specialization}`)}
-                  </Typography>
-                  <Box sx={{ mt: 2 }}>
-                    <Chip 
-                      label={t(`common.${trainer.status}`)} 
+                  flexDirection: 'column'
+                }}>
+                  {/* Name and Status */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 3
+                  }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 600,
+                        color: 'primary.main',
+                        fontSize: '1.25rem'
+                      }}
+                    >
+                      {trainer.name}
+                    </Typography>
+                    <Chip
+                      label={trainer.status === 'active' ? t('common.active') : t('common.inactive')}
                       color={trainer.status === 'active' ? 'success' : 'default'}
                       size="small"
-                      sx={{ mr: 1 }}
+                      sx={{ 
+                        borderRadius: '6px',
+                        height: '24px',
+                        minWidth: '80px',
+                        '& .MuiChip-label': {
+                          px: 1,
+                          fontSize: '0.75rem'
+                        }
+                      }}
                     />
-                    {trainer.certifications?.length > 0 && (
-                      <Chip 
+                  </Box>
+
+                  {/* Contact Info */}
+                  <Box sx={{ 
+                    mb: 'auto',
+                    display: 'grid',
+                    gap: 2
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        color: 'text.secondary'
+                      }}
+                    >
+                      {trainer.email}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <Typography component="span" color="text.secondary">
+                        {t('trainer.phone')}:
+                      </Typography>
+                      {trainer.phone}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <Typography component="span" color="text.secondary">
+                        {t('trainer.specialization')}:
+                      </Typography>
+                      {t(`trainer.specializations.${trainer.specialization}`)}
+                    </Typography>
+                  </Box>
+
+                  {/* Certifications */}
+                  {trainer.certifications?.length > 0 && (
+                    <Box sx={{ 
+                      mt: 3,
+                      mb: 2
+                    }}>
+                      <Chip
                         label={`${trainer.certifications.length} ${t('common.certifications')}`}
                         color="info"
                         size="small"
+                        sx={{ 
+                          borderRadius: '6px',
+                          height: '24px',
+                          minWidth: '120px',
+                          '& .MuiChip-label': {
+                            px: 1,
+                            fontSize: '0.75rem'
+                          }
+                        }}
                       />
-                    )}
+                    </Box>
+                  )}
+
+                  {/* Actions */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    gap: 2,
+                    justifyContent: 'flex-end',
+                    mt: 3,
+                    pt: 2,
+                    borderTop: '1px solid',
+                    borderColor: 'divider'
+                  }}>
+                    <Button
+                      startIcon={<EditIcon />}
+                      size="small"
+                      onClick={() => handleOpen(trainer)}
+                      sx={{
+                        borderRadius: '6px',
+                        textTransform: 'none',
+                        minWidth: '100px'
+                      }}
+                    >
+                      {t('common.edit')}
+                    </Button>
+                    <Button
+                      startIcon={<DeleteIcon />}
+                      size="small"
+                      color="error"
+                      onClick={() => handleDelete(trainer._id)}
+                      sx={{
+                        borderRadius: '6px',
+                        textTransform: 'none',
+                        minWidth: '100px'
+                      }}
+                    >
+                      {t('common.delete')}
+                    </Button>
                   </Box>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleEdit(trainer)}
-                  >
-                    {t('common.edit')}
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => handleDelete(trainer._id)}
-                  >
-                    {t('common.delete')}
-                  </Button>
-                </CardActions>
               </Card>
             </Grid>
           ))
         ) : (
           <Grid item xs={12}>
             <Box sx={{ 
-              p: 3, 
               textAlign: 'center',
+              py: 4,
               bgcolor: 'background.paper',
-              borderRadius: 1
+              borderRadius: '12px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
             }}>
-              <Typography color="textSecondary">
-                {t('common.noTrainersFound')}
+              <Typography variant="h6" color="text.secondary">
+                {t('common.noTrainers')}
               </Typography>
             </Box>
           </Grid>
         )}
       </Grid>
 
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{selectedTrainer ? t('trainer.editTrainer') : t('trainer.addTrainer')}</DialogTitle>
+      {/* Add/Edit Dialog */}
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {selectedTrainer ? t('trainer.editTrainer') : t('trainer.addTrainer')}
+        </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent sx={{ p: 3 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>{t('common.basicInformation')}</Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('common.name')}
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('common.email')}
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('common.phone')}
-                  name="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('common.password')}
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>{t('trainer.professionalDetails')}</Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>{t('trainer.specialization')}</InputLabel>
-                  <Select
-                    value={formData.specialization}
-                    label={t('trainer.specialization')}
-                    onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                  >
-                    <MenuItem value="dressage">{t('trainer.specializations.dressage')}</MenuItem>
-                    <MenuItem value="jumping">{t('trainer.specializations.jumping')}</MenuItem>
-                    <MenuItem value="eventing">{t('trainer.specializations.eventing')}</MenuItem>
-                    <MenuItem value="western">{t('trainer.specializations.western')}</MenuItem>
-                    <MenuItem value="general">{t('trainer.specializations.general')}</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('common.certifications')}
-                  name="certifications"
-                  value={formData.certifications.join(', ')}
-                  onChange={(e) => setFormData({ ...formData, certifications: e.target.value.split(', ') })}
-                  helperText={t('common.certificationsHelperText')}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>{t('common.availability')}</Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  {t('common.availabilityHelperText')}
-                </Typography>
-              </Grid>
-              {Object.keys(formData.availability).map((day) => (
-                <Grid item xs={12} md={6} key={day}>
-                  <TextField
-                    fullWidth
-                    label={t(`common.${day}`)}
-                    name={`availability.${day}`}
-                    value={formData.availability[day].join(', ')}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      availability: {
-                        ...formData.availability,
-                        [day]: e.target.value.split(', ')
-                      }
-                    })}
-                    helperText={t(`common.${day}HelperText`)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label={t('trainer.name')}
+              fullWidth
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+            <TextField
+              margin="dense"
+              label={t('trainer.email')}
+              type="email"
+              fullWidth
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
+            <TextField
+              margin="dense"
+              label={t('trainer.phone')}
+              fullWidth
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              required
+            />
+            {!selectedTrainer && (
+              <TextField
+                margin="dense"
+                label={t('trainer.password')}
+                type="password"
+                fullWidth
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
             )}
+            <FormControl fullWidth margin="dense">
+              <InputLabel>{t('trainer.specialization')}</InputLabel>
+              <Select
+                value={formData.specialization}
+                onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                label={t('trainer.specialization')}
+                required
+              >
+                <MenuItem value="general">{t('trainer.specializations.general')}</MenuItem>
+                <MenuItem value="dressage">{t('trainer.specializations.dressage')}</MenuItem>
+                <MenuItem value="jumping">{t('trainer.specializations.jumping')}</MenuItem>
+                <MenuItem value="eventing">{t('trainer.specializations.eventing')}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="dense">
+              <InputLabel>{t('common.status')}</InputLabel>
+              <Select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                label={t('common.status')}
+                required
+              >
+                <MenuItem value="active">{t('common.active')}</MenuItem>
+                <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
+              </Select>
+            </FormControl>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
+          <DialogActions>
             <Button onClick={handleClose}>{t('common.cancel')}</Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary" 
-              disabled={loading}
-              sx={{ minWidth: 100 }}
-            >
-              {loading ? t('common.saving') : selectedTrainer ? t('common.update') : t('common.add')}
+            <Button type="submit" variant="contained">
+              {selectedTrainer ? t('common.save') : t('common.submit')}
             </Button>
           </DialogActions>
         </form>

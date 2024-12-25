@@ -204,60 +204,144 @@ const TraineeList = () => {
         </Button>
       </Box>
 
+      {/* Trainee Grid */}
       <Grid container spacing={3}>
-        {Array.isArray(trainees) && trainees.length > 0 ? (
+        {trainees && trainees.length > 0 ? (
           trainees.map((trainee) => (
-            <Grid item xs={12} sm={6} md={4} key={trainee._id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
+            <Grid item xs={12} sm={12} md={6} key={trainee._id}>
+              <Card sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '12px',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  flexGrow: 1,
                   display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    boxShadow: 6
-                  }
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {trainee.name}
-                  </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    {trainee.email}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {t('trainee.phone')}: {trainee.phone}
-                  </Typography>
-                  {trainee.trainer && (
-                    <Typography variant="body2" gutterBottom>
-                      {t('trainee.trainer')}: {trainee.trainer.name}
+                  flexDirection: 'column'
+                }}>
+                  {/* Name and Status */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 3
+                  }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 600,
+                        color: 'primary.main',
+                        fontSize: '1.25rem'
+                      }}
+                    >
+                      {trainee.name}
                     </Typography>
-                  )}
-                  <Box sx={{ mt: 2 }}>
-                    <Chip 
-                      label={trainee.status || 'active'} 
+                    <Chip
+                      label={trainee.status === 'active' ? t('common.active') : t('common.inactive')}
                       color={trainee.status === 'active' ? 'success' : 'default'}
                       size="small"
+                      sx={{ 
+                        borderRadius: '6px',
+                        height: '24px',
+                        minWidth: '80px',
+                        '& .MuiChip-label': {
+                          px: 1,
+                          fontSize: '0.75rem'
+                        }
+                      }}
                     />
                   </Box>
+
+                  {/* Contact Info */}
+                  <Box sx={{ 
+                    mb: 'auto',
+                    display: 'grid',
+                    gap: 2
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        color: 'text.secondary'
+                      }}
+                    >
+                      {trainee.email}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <Typography component="span" color="text.secondary">
+                        {t('common.phone')}:
+                      </Typography>
+                      {trainee.phone}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <Typography component="span" color="text.secondary">
+                        {t('trainee.level')}:
+                      </Typography>
+                      {t(`trainee.levels.${trainee.level}`)}
+                    </Typography>
+                  </Box>
+
+                  {/* Actions */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    gap: 2,
+                    justifyContent: 'flex-end',
+                    mt: 3,
+                    pt: 2,
+                    borderTop: '1px solid',
+                    borderColor: 'divider'
+                  }}>
+                    <Button
+                      startIcon={<EditIcon />}
+                      size="small"
+                      onClick={() => handleOpen(trainee)}
+                      sx={{
+                        borderRadius: '6px',
+                        textTransform: 'none',
+                        minWidth: '100px'
+                      }}
+                    >
+                      {t('common.edit')}
+                    </Button>
+                    <Button
+                      startIcon={<DeleteIcon />}
+                      size="small"
+                      color="error"
+                      onClick={() => handleDelete(trainee._id)}
+                      sx={{
+                        borderRadius: '6px',
+                        textTransform: 'none',
+                        minWidth: '100px'
+                      }}
+                    >
+                      {t('common.delete')}
+                    </Button>
+                  </Box>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleEdit(trainee)}
-                    sx={{ mr: 1 }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(trainee._id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </CardActions>
               </Card>
             </Grid>
           ))
