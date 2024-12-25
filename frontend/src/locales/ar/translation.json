@@ -49,7 +49,54 @@
     "basicInformation": "المعلومات الأساسية",
     "availability": "الجدول المتاح",
     "availabilityHelperText": "حدد الأيام والساعات المتاحة للتدريب",
-    "certificationsHelperText": "أدخل الشهادات والمؤهلات المهنية"
+    "certificationsHelperText": "أدخل الشهادات والمؤهلات المهنية",
+    "actions": "إجراءات",
+    "details": "التفاصيل",
+    "success": "نجاح",
+    "error": "خطأ",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "dark": "داكن",
+    "light": "فاتح"
+  },
+  "university": {
+    "name": "جامعة طرابلس",
+    "logo": "شعار الجامعة"
+  },
+  "faculty": {
+    "name": "كلية تقنية المعلومات"
+  },
+  "project": {
+    "title": "نظام إدارة أكاديمية جامعة طرابلس للفروسية",
+    "description": "مشروع مقدم لقسم هندسة البرمجيات لاستيفاء متطلبات درجة البكالوريوس",
+    "students": "إعداد الطلاب",
+    "student1": "نهال محمد المبروك الجبير - رقم القيد: 2191807474",
+    "student2": "الاء صالح سالم شتامي - رقم القيد: 2191809943",
+    "supervisor": "إشراف",
+    "supervisorName": "د. امنة علي عبد السلام محمد"
+  },
+  "auth": {
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "login": "تسجيل الدخول",
+    "loginButton": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "rememberMe": "تذكرني",
+    "loginError": "خطأ في تسجيل الدخول",
+    "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "horses": "الخيول",
+    "trainers": "المدربين",
+    "trainees": "المتدربين",
+    "competitions": "المسابقات",
+    "classes": "الحصص التدريبية",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات"
   },
   "horse": {
     "title": "إدارة الخيول",

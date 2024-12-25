@@ -18,6 +18,17 @@
     "delete": "Delete",
     "loading": "Loading..."
   },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "loginButton": "Login",
+    "logout": "Logout",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "loginError": "Login Error",
+    "invalidCredentials": "Invalid username or password"
+  },
   "dashboard": {
     "upcomingClasses": "Upcoming Classes",
     "activeCompetitions": "Active Competitions",

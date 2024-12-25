@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 import { login as apiLogin, logout as apiLogout } from '../services/api';
 
+// Clear any existing auth data on store initialization
+localStorage.removeItem('token');
+localStorage.removeItem('user');
+
 const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('user')) || null,
-  token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  user: null,
+  token: null,
+  isAuthenticated: false,
   isLoading: false,
   error: null,
 
@@ -13,7 +17,7 @@ const useAuthStore = create((set) => ({
     try {
       const response = await apiLogin(credentials);
       
-      if (!response.data) {
+      if (!response?.data) {
         throw new Error('No data received from server');
       }
 
@@ -41,6 +45,9 @@ const useAuthStore = create((set) => ({
                           error.message || 
                           'An error occurred during login';
       
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       set({
         isLoading: false,
         error: errorMessage,
@@ -54,22 +61,14 @@ const useAuthStore = create((set) => ({
   },
 
   logout: () => {
-    try {
-      apiLogout();
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        error: null,
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      set({
-        error: 'Error during logout',
-      });
-    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    set({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      error: null,
+    });
   },
 
   clearError: () => set({ error: null }),

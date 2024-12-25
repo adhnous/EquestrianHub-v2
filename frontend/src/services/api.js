@@ -5,11 +5,10 @@ const getAuthToken = () => {
 };
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:5000/api',
   headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true
+    'Content-Type': 'application/json'
+  }
 });
 
 // Add a request interceptor to include the auth token
@@ -22,11 +21,13 @@ api.interceptors.request.use(
     console.log('Request config:', {
       url: config.url,
       method: config.method,
-      headers: config.headers
+      headers: config.headers,
+      data: config.data
     });
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -45,10 +46,10 @@ api.interceptors.response.use(
     console.error('API Error:', {
       url: error.config?.url,
       status: error.response?.status,
-      message: error.response?.data?.message || error.message
+      message: error.response?.data?.message || error.message,
+      data: error.response?.data
     });
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -57,7 +58,26 @@ api.interceptors.response.use(
 );
 
 // Auth endpoints
-const login = (credentials) => api.post('/login', credentials);
+const login = async (credentials) => {
+  try {
+    console.log('Login attempt with:', credentials);
+    const response = await api.post('/login', {
+      email: credentials.username,
+      password: credentials.password
+    });
+    
+    if (response.data.success && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
 const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
